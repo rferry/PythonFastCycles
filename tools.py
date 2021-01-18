@@ -12,7 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 
-def create_config_file(path, simuname, fric_law = 'RateStateAgeing_R', mu=30*1e9, sigma_N=-1e8, Dc=1e-3, b=0.01, a_over_b=0.75, V_val_x1=-10, V_val_x2=10, V_val_pourc=0.001, sigma11_dot_inf = 0.00e+00, sigma22_dot_inf = 0.00e+00, sigma12_dot_inf = 0.00e+00, sigma31_dot_inf = 0.00e+00, sigma32_dot_inf = 0.00e+00, stop_criteria=1, max_it=10000, final_time=10000000) :  
+def create_config_file(path, simuname, fric_law = 'RateStateAgeing_R', mu=30*1e9, sigma_N=-1e8, Dc=1e-3, b=0.01, a_over_b=0.75, V_val_x1=-10, V_val_x2=10, V_val_pourc=0.001, sigma11_dot_inf = 0.00e+00, sigma22_dot_inf = 0.00e+00, sigma12_dot_inf = 0.00e+00, sigma31_dot_inf = 0.00e+00, sigma32_dot_inf = 0.00e+00, stop_criteria=1, max_it=10000, final_time=10000000, nf=False) :  
     # Preliminary checks
     if stop_criteria not in [0, 1, 2]:
         raise TypeError('stop_criteria should be 0, 1 or 2')
@@ -24,6 +24,15 @@ def create_config_file(path, simuname, fric_law = 'RateStateAgeing_R', mu=30*1e9
     a = a_over_b * b
     Lb = - (mu * Dc) / (sigma_N * b)
     
+    # Get fault number if unspecified 
+    if nf == False:
+        try:
+            with open(path + 'geometry.in') as file:
+                content = file.read()
+            nf = content.count('/')
+        except Exception:  # if geometry.in do not exist
+            print('You must specify a fault number or create geometry.in first')
+        
     # Content of config.in file 
     content = ['&main\n',
      "simulation_name = '{}'\n".format(simuname),
@@ -40,18 +49,21 @@ def create_config_file(path, simuname, fric_law = 'RateStateAgeing_R', mu=30*1e9
      'sigma12_dot_inf = {} \n'.format(sigma12_dot_inf),
      'sigma31_dot_inf = {} \n'.format(sigma31_dot_inf),
      'sigma32_dot_inf = {} \n'.format(sigma32_dot_inf),
-     '/\n',
-     '&fault_friction\n',
-     "a_distr = 'CST'\n",
-     'a_val = -1.000e+00,-1.000e+00,{},{}\n'.format(a, a),
-     "b_distr = 'CST'\n",
-     'b_val = -1,-1,{},{}\n'.format(b, b),
-     "Dc_distr = 'CST'\n",
-     'Dc_val = -1,-1,{},{}\n'.format(Dc, Dc),
-     "V0_distr = 'CST'\n",
-     'V0_val = -1.000e+00,-1.000e+00,1e-09,1e-09\n',
-     '/\n',
-     '&fault_initial_condition\n',
+     '/\n']
+
+    for i in range(nf):
+        content += [ '&fault_friction\n', 
+                    "a_distr = 'CST'\n",
+                    'a_val = -1.000e+00,-1.000e+00,{},{}\n'.format(a, a),
+                    "b_distr = 'CST'\n",
+                    'b_val = -1,-1,{},{}\n'.format(b, b),
+                    "Dc_distr = 'CST'\n",
+                    'Dc_val = -1,-1,{},{}\n'.format(Dc, Dc),
+                    "V0_distr = 'CST'\n",
+                    'V0_val = -1.000e+00,-1.000e+00,1e-09,1e-09\n',
+                    '/\n']
+    
+    content += ['&fault_initial_condition\n',
      "slip_distr = 'CST'\n",
      'slip_val = -1.000e+00,-1.000e+00,0,0\n',
      "V_distr = 'CST'\n",
@@ -61,8 +73,23 @@ def create_config_file(path, simuname, fric_law = 'RateStateAgeing_R', mu=30*1e9
      "sigmaN_distr = 'CST'\n",
      'sigmaN_val = -1,-1,{},{}\n'.format(sigma_N, sigma_N),
      'ds = {}\n'.format(Lb/10),
-     '/\n',
-     '&simulation_parameter\n',
+     '/\n']
+    
+    for i in range(nf - 1):
+        content += ['&fault_initial_condition\n',
+                    "slip_distr = 'CST'\n",
+                    'slip_val = -1.000e+00,-1.000e+00,0,0\n',
+                    "V_distr = 'CST'\n",
+                    'V_val = -1.000e+00,-1.000e+00,1e-09,1e-09\n',
+                    "theta_distr = 'CST'\n",
+                    'theta_val = -1.000e+00,-1.000e+00,1000000.0,1000000.0\n',
+                    "sigmaN_distr = 'CST'\n",
+                    'sigmaN_val = -1,-1,{},{}\n'.format(sigma_N, sigma_N),
+                    'ds = {}\n'.format(Lb/10),
+                    '/\n']
+      
+        
+    content += ['&simulation_parameter\n',
      "fracture_mode = 'modeIII'\n",
      "static_kernel = 'hmatrix'\n",
      'initial_time = 0.000e+00 \n',
@@ -93,10 +120,34 @@ def create_config_file(path, simuname, fric_law = 'RateStateAgeing_R', mu=30*1e9
 
 
 def create_geom_1fault(path, x1, x2):
+    """
+    Creates geometry.in file for a simple fault configuration with two points 
+    (x1, 0) and (x2, 0).
+
+    Parameters
+    ----------
+    path : string
+        Path to the simulation directory.
+    x1 : float
+        x coordinate of the first point.
+    x2 : float
+        x coordinate of the second point.
+
+    Returns
+    -------
+    None.
+
+    """
+    # Checks that x1 < x2
+    if x1 > x2:
+        raise ValueError('x1 should be inferior to x2')
+       
+    # Create file content    
     content = ['{} 0.000e+00 \n'.format(x1), 
                '{} 0.000e+00 \n'.format(x2), 
                '/\n']
    
+    # Write geometry.in 
     with open(path + 'geometry.in', 'w') as file:
         for line in content:
             file.write(line)
@@ -128,19 +179,31 @@ def create_geom_2_faults_overlapping(path, Lnuc, D_over_Lnuc, L_over_Lnuc, overl
         Length of the faul express as the ratio L/Lnuc.
     overlap : real
         Portion of the fault overlapping. 0 < overlap < 1.
+        overlap = 0:
+                  =======
+           ======= 
+        overlap = 1:
+            =======
+            =======
 
     Returns
     -------
     None.
 
     """
+    # Preliminary checks
+    if (overlap > 1) or (overlap < 0):
+        raise ValueError('overlap should be between 0 and 1')
+        
+    # Create file content 
     content = ['0.000e+00 0.000e+00 \n', 
                '{} 0.000e+00 \n'.format(L_over_Lnuc * Lnuc), 
                '/\n',
                '{} {} \n'.format(L_over_Lnuc * Lnuc * (1 - overlap), D_over_Lnuc * Lnuc),
                '{} {} \n'.format(L_over_Lnuc * Lnuc * (2 - overlap), D_over_Lnuc * Lnuc),
                '/\n']
-       
+    
+    # Write geometry.in
     with open(path + 'geometry.in', 'w') as file:
         for line in content:
             file.write(line)
