@@ -14,7 +14,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 # os.chdir('/Users/roxane/Desktop/Roxane')
-sys.path.append('/Users/roxane/Desktop/Roxane')
+sys.path.append('/Users/roxane/Desktop/Roxane/PythonFastCycles')
 from tools import *
 ############################
 # Defines constant varibles
