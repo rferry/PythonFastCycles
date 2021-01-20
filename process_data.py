@@ -152,3 +152,66 @@ class ReadData:
     def read_EQcatalog(self):
         # TODO !
         pass
+
+    def plot_max_vel(self, ssel=1e-8, egl=1e-3):
+        # Determine yaxis lim --> determine min and max velocity
+        minv = 1000  # ridiculous value to always be below
+        maxv = -9999  # ridiculous value to always be above
+        for i in range(self.nbr_fault):
+            mint = np.min(self.max_vel[i])
+            maxt = np.max(self.max_vel[i])
+            if mint < minv:
+                minv = mint
+            else:
+                pass
+            if maxt > maxv:
+                maxv = maxt
+            else:
+                pass
+
+        # Time
+        time = self.time / (3600*24*362.25)
+
+        # Create figure
+        fig, axs = plt.subplots(self.nbr_fault, 1)
+
+        for i in range(self.nbr_fault):
+            # Plot data
+            axs[i].plot(time, self.max_vel[i], color='red')
+
+            # Set ylim
+            axs[i].set_ylim(minv, maxv*10)
+
+            # Fill between line and O
+            axs[i].fill_between(
+                time, 0, self.max_vel[i], color='lightgrey')
+
+            # Set tick label size
+            axs[i].yaxis.set_tick_params(labelsize=9)
+            axs[i].xaxis.set_tick_params(labelsize=9)
+
+            # Create grid
+            axs[i].grid()
+
+            # Put y axis in log
+            axs[i].set_yscale('log')
+
+            # Avoid white space between start and en of axis
+            axs[i].margins(x=0)
+
+            # Write subplot title
+            axs[i].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+            axs[i].yaxis.set_label_position("right")
+
+            # Draw SSE and EQ horizontal lines
+            axs[i].axhline(ssel, color='lightgreen',
+                           linestyle='--', dashes=(4, 4))
+            axs[i].axhline(egl, color='paleturquoise',
+                           linestyle='--', dashes=(4, 4))
+
+        # x axis label
+        axs[self.nbr_fault - 1].set_xlabel('Time (year)', fontsize=12)
+
+        # Add common ylabel
+        fig.text(0.01, 0.5, 'Maximum slip rate ($m.s^{-1}$)',
+                 va='center', rotation='vertical', fontsize=12)
