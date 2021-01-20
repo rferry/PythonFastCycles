@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Tue Jan 19 13:30:09 2021
+Class to read data. 
 
-@author: roxane
+First version by R.Ferry on January 2021.
 """
 import numpy as np
 import sys

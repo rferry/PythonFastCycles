@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Tue Jan 19 11:11:19 2021
+Class to create all files for a simulation.
 
-@author: roxane
+First version by R. Ferry on January 2021.
 """
 import numpy as np
 import sys
