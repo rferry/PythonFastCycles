@@ -173,44 +173,44 @@ class ReadData:
         time = self.time / (3600*24*362.25)
 
         # Create figure
-        fig, axs = plt.subplots(self.nbr_fault, 1)
+        fig, axs = plt.subplots(self.nbr_fault, 1, squeeze=False)
 
         for i in range(self.nbr_fault):
             # Plot data
-            axs[i].plot(time, self.max_vel[i], color='red')
+            axs[i, 0].plot(time, self.max_vel[i], color='red')
 
             # Set ylim
-            axs[i].set_ylim(minv, maxv*10)
+            axs[i, 0].set_ylim(minv, maxv*10)
 
             # Fill between line and O
-            axs[i].fill_between(
+            axs[i, 0].fill_between(
                 time, 0, self.max_vel[i], color='lightgrey')
 
             # Set tick label size
-            axs[i].yaxis.set_tick_params(labelsize=9)
-            axs[i].xaxis.set_tick_params(labelsize=9)
+            axs[i, 0].yaxis.set_tick_params(labelsize=9)
+            axs[i, 0].xaxis.set_tick_params(labelsize=9)
 
             # Create grid
-            axs[i].grid()
+            axs[i, 0].grid()
 
             # Put y axis in log
-            axs[i].set_yscale('log')
+            axs[i, 0].set_yscale('log')
 
             # Avoid white space between start and en of axis
-            axs[i].margins(x=0)
+            axs[i, 0].margins(x=0)
 
             # Write subplot title
-            axs[i].set_ylabel('Fault {}'.format(i+1), fontsize=11)
-            axs[i].yaxis.set_label_position("right")
+            axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+            axs[i, 0].yaxis.set_label_position("right")
 
             # Draw SSE and EQ horizontal lines
-            axs[i].axhline(ssel, color='lightgreen',
-                           linestyle='--', dashes=(4, 4))
-            axs[i].axhline(egl, color='paleturquoise',
-                           linestyle='--', dashes=(4, 4))
+            axs[i, 0].axhline(ssel, color='lightgreen',
+                              linestyle='--', dashes=(4, 4))
+            axs[i, 0].axhline(egl, color='paleturquoise',
+                              linestyle='--', dashes=(4, 4))
 
         # x axis label
-        axs[self.nbr_fault - 1].set_xlabel('Time (year)', fontsize=12)
+        axs[self.nbr_fault - 1, 0].set_xlabel('Time (year)', fontsize=12)
 
         # Add common ylabel
         fig.text(0.01, 0.5, 'Maximum slip rate ($m.s^{-1}$)',
