@@ -24,7 +24,20 @@ from tools import nice_colormap
 
 class ReadData:
     def __init__(self, path):
+        """
+        Initialisation of the class. Call functions to read data.
 
+        Parameters
+        ----------
+        path : string
+            Path to simulation directory. 
+
+        Returns
+        -------
+        None.
+
+        """
+        # Store the path
         self.path = path
         
         # Read config.in
@@ -50,7 +63,7 @@ class ReadData:
         self.read_moment_rate()
 
         # Compute max_vel
-        self.max_vel = self.compute_max_vel()
+        self.compute_max_vel()
         
         # Compute L and Lnuc
         self.L = []
@@ -60,6 +73,20 @@ class ReadData:
             self.Lnuc.append((self.mu * self.Dc[i]) / (self.sigmaN[i] * (self.b[i] - self.a[i])))
 
     def read_binary_file(self, file_type):
+        """
+        Read Fortran binary files "velocity", "tractionN", "theta" and "time".
+
+        Parameters
+        ----------
+        file_type : string
+            File type to read. It can be "velocity", "tractionN", "theta" or 
+            "time".
+
+        Returns
+        -------
+        None.
+
+        """
 
         files = []  # list of files of the right type
         # Loops over the files and select those with 'file_type' in their name
@@ -117,6 +144,15 @@ class ReadData:
             self.tractionN = data
 
     def read_geometry_out(self):
+        """
+        Read "geometry.out" file to get the number of fault, the number of 
+        elements per fault and the coordinates of the segments.
+
+        Returns
+        -------
+        None.
+
+        """
         # Open geometry.out and read content
         with open(self.path + 'geometry.out', 'r') as file:
             content = file.readlines()
@@ -152,6 +188,14 @@ class ReadData:
         self.ey = ey            
             
     def compute_max_vel(self):
+        """
+        Compute the maximum velocity for all faults.
+
+        Returns
+        -------
+        None.
+
+        """
         # TODO ! Add check if self.velocity is defined
         max_vel = []
         # Loop over the faults
@@ -162,9 +206,19 @@ class ReadData:
                 max_vel_temp.append(np.max(el))
             max_vel.append(max_vel_temp)  # max_vel for one fault
 
-        return max_vel
-
+        # Store results 
+        self.max_vel = max_vel
+        
     def read_moment_rate(self):
+        """
+        Read "MomentRate.out" file to get net moment rate and moment rate for 
+        all faults.
+
+        Returns
+        -------
+        None.
+
+        """
         # Open and read MomentRate.out
         with open(self.path + 'MomentRate.out', 'r') as file:
             content = file.readlines()
@@ -188,6 +242,14 @@ class ReadData:
         self.tMrate = tMrate
 
     def read_config(self):
+        """
+        Read "config.in" file to get simulation parameters
+
+        Returns
+        -------
+        None.
+
+        """
         # Open config.in and read content
         with open(self.path + 'config.in', 'r') as file:
             content = file.readlines()
@@ -198,7 +260,8 @@ class ReadData:
         Dc = []
         sigmaN = []
         ds = []
-        sigma_dot = np.zeros((3, 3))
+        sigma_dot = np.zeros((3, 3)) # sigma_dot components will be zero unless
+                                     # specified otherwise 
         
         # Loop over content
         for i, line in enumerate(content):
@@ -248,7 +311,7 @@ class ReadData:
         # TODO !
         pass
 
-    def plot_max_vel(self, ssel=1e-8, eql=1e-3, savefig=True):
+    def plot_max_vel(self, ssel=1e-8, eql=1e-3, start=0, stop=None, savefig=True):
         """
         Plot mamimum slip for all faults.
 
@@ -257,7 +320,12 @@ class ReadData:
         ssel : float, optional
             SSE velocity limit to draw horizontal line. The default is 1e-8.
         eql : float, optional
-            Earthquake velocity limit to draw horizontal line. The default is 1e-3.
+            Earthquake velocity limit to draw horizontal line. The default is 
+            1e-3.
+        start : int, optional
+            Starting index to plot data. The default is 0.
+        stop : int, optional
+            Last index to plot data. The default is None (i.e. last data)
 
         Returns
         -------
@@ -268,8 +336,8 @@ class ReadData:
         minv = 1000  # ridiculous value to always be below
         maxv = -9999  # ridiculous value to always be above
         for i in range(self.nbr_fault):
-            mint = np.min(self.max_vel[i])
-            maxt = np.max(self.max_vel[i])
+            mint = np.min(self.max_vel[i][start:stop])
+            maxt = np.max(self.max_vel[i][start:stop])
             if mint < minv:
                 minv = mint
             else:
@@ -280,21 +348,21 @@ class ReadData:
                 pass
 
         # Time
-        time = self.time / (3600*24*362.25)
+        time = self.time[start:stop] / (3600*24*362.25)
 
         # Create figure
         fig, axs = plt.subplots(self.nbr_fault, 1, squeeze=False)
 
         for i in range(self.nbr_fault):
             # Plot data
-            axs[i, 0].plot(time, self.max_vel[i], color='red')
+            axs[i, 0].plot(time, self.max_vel[i][start:stop], color='red')
 
             # Set ylim
             axs[i, 0].set_ylim(minv, maxv*10)
 
             # Fill between line and O
             axs[i, 0].fill_between(
-                time, 0, self.max_vel[i], color='lightgrey')
+                time, 0, self.max_vel[i][start:stop], color='lightgrey')
 
             # Set tick label size
             axs[i, 0].yaxis.set_tick_params(labelsize=9)
@@ -330,12 +398,30 @@ class ReadData:
         if savefig:
             fig.savefig(self.path + 'max_vel_evolution.png', dpi=400)
         
-    def plot_slip_rate(self, vmask=1e-14, savefig=True):
-        # Don't plot all the data
-        idxlim = 1000
-        
+    def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, savefig=True):  
+        """
+        Plot slip rate evolution for all faults.
+
+        Parameters
+        ----------
+        vmask : float, optional
+            Mask velocities below vmask (they will be display in white). The 
+            default is 1e-14.
+        start : int, optional
+            Starting index to plot data. The default is 0.
+        stop : int, optional
+            Last index to plot data. The default is None (i.e. last data)
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "slip_rate_evolution.png". The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
         # Time in year
-        time = self.time[0:idxlim]/(365.25*24*3600)
+        time = self.time[start:stop]/(365.25*24*3600)
         
         # fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=True, gridspec_kw={'width_ratios': [2, 2, 2]})
         fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=True)
@@ -346,7 +432,7 @@ class ReadData:
         
         # Loop over all the fault 
         for i in range(self.nbr_fault):
-            axs[0].plot(self.max_vel[i][0:idxlim], time, label='Fault {}'.format(i+1))
+            axs[0].plot(self.max_vel[i][start:stop], time, label='Fault {}'.format(i+1))
             
         # Put y axis in log
         axs[0].set_xscale('log')
@@ -377,7 +463,7 @@ class ReadData:
             
             # Plot
             # norm=colors.LogNorm(vmin=self.velocity[i][0:idxlim].min(), vmax=self.velocity[i][0:idxlim].max())
-            cs = axs[i+1].pcolormesh(xx, yy, velm[0:idxlim], norm=colors.LogNorm(vmin=1e-12, vmax=1), cmap=cmp)
+            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], norm=colors.LogNorm(vmin=1e-12, vmax=1), cmap=cmp)
        
             # Remove frame            
             axs[i+1].spines["right"].set_visible(False)
@@ -405,3 +491,6 @@ class ReadData:
 
         return
         
+    def plot_moment_rate(self):
+        # TODO !
+        pass
