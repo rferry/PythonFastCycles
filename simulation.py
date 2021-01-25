@@ -86,23 +86,23 @@ class Simulation:
 
         return
 
-    def create_tides_file(self, a1=[5.0e+4], a2=[86400.0], a3=[0.000]):
+    def create_tides_file(self, Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0]):
         """
         Creates tides.in at the location 'path'.
 
 
         """
-        self.a1 = a1
-        self.a2 = a2
-        self.a3 = a3
+        self.Tampli = Tampli
+        self.Tperiod = Tperiod
+        self.Tphase = Tphase
 
-        if len(self.a1) != len(self.a2) != len(self.a3):
+        if len(self.Tampli) != len(self.Tperiod) != len(self.Tphase):
             print('a1, a2 and a3 are not of the same size !')
         else:
             content = []
-            for i, el in enumerate(self.a1):
+            for i, el in enumerate(self.Tampli):
                 content.append('{} {} {} \n'.format(
-                    el, self.a2[i], self.a3[i]))
+                    el, self.Tperiod[i], self.Tphase[i]))
             content.append('/')
 
             with open(self.path + 'tides.in', 'w') as file:
@@ -149,7 +149,13 @@ class Simulation:
                 self.nf = content.count('/')
             except Exception:  # if geometry.in do not exist
                 print('You must specify a fault number or create geometry.in first')
-
+        
+        # Reference velocity       
+        V0_val = 1e-9  # TODO ! Option to change V0_val ?  
+        
+        # Compute theta_val
+        self.theta_val = self.Dc / V0_val
+        
         # Content of config.in file
         content = ['&main\n',
                    "simulation_name = '{}'\n".format(self.simuname),
@@ -188,7 +194,7 @@ class Simulation:
                     'V_val = {},{},1e-09,{}e-09\n'.format(
                         self.Vval_x1, self.Vval_x2, 1 + self.Vval_pourc),
                     "theta_distr = 'CST'\n",
-                    'theta_val = -1.000e+00,-1.000e+00,1000000.0,1000000.0\n',
+                    'theta_val = -1.000e+00,-1.000e+00,{},{}\n'.format(self.theta_val, self.theta_val),
                     "sigmaN_distr = 'CST'\n",
                     'sigmaN_val = -1,-1,{},{}\n'.format(
                         self.sigma_N, self.sigma_N),
@@ -202,7 +208,7 @@ class Simulation:
                         "V_distr = 'CST'\n",
                         'V_val = -1.000e+00,-1.000e+00,1e-09,1e-09\n',
                         "theta_distr = 'CST'\n",
-                        'theta_val = -1.000e+00,-1.000e+00,1000000.0,1000000.0\n',
+                        'theta_val = -1.000e+00,-1.000e+00,{},{}\n'.format(self.theta_val, self.theta_val),
                         "sigmaN_distr = 'CST'\n",
                         'sigmaN_val = -1,-1,{},{}\n'.format(
                             self.sigma_N, self.sigma_N),

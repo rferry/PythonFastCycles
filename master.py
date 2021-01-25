@@ -257,4 +257,7 @@ scatter = ax.scatter(period[mask], sdot_simu[mask], c = L_simu[mask])
 
 handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
 legend2 = ax.legend(handles, labels, loc="best", title=r'$L/L_{nuc}$')
+
+#%%
+path = 'C:\\Users\\ferry\\Documents\\Sciences\\Stages\\ENS_2021\\Simulations\\Test\\'
             

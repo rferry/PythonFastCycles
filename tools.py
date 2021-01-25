@@ -12,6 +12,8 @@ from scipy.io import FortranFile
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
+from matplotlib import cm 
+from matplotlib.colors import ListedColormap,LinearSegmentedColormap
 
 
 def create_config_file(path, simuname, fric_law='RateStateAgeing_R', mu=30*1e9, sigma_N=-1e8, Dc=1e-3, b=0.01, a_over_b=0.75, V_val_x1=-10, V_val_x2=10, V_val_pourc=0.001, sigma11_dot_inf=0.00e+00, sigma22_dot_inf=0.00e+00, sigma12_dot_inf=0.00e+00, sigma31_dot_inf=0.00e+00, sigma32_dot_inf=0.00e+00, stop_criteria=1, max_it=10000, final_time=10000000, nf=False):
@@ -500,3 +502,30 @@ def run_simulations(simunames):
             file.write('./fastcycles ./problems/' + simuname + '/ &')
 
     os.system('/Users/roxane/Desktop/version11/runproblem')
+    
+def nice_colormap(minv=1e-12, ssel=1e-8, eql=1e-3, maxv=1):  
+    # Compute proportion of each colormap
+    l = abs(np.log(minv) - np.log(maxv))
+    l1 = abs(np.log(maxv) - np.log(eql)) / l
+    l2 = abs(np.log(eql) - np.log(ssel)) / l
+    p1 = int(round(384 * l1))
+    p2 = int(round(384 * l2))
+    p3 = 384 - p1 - p2
+    
+    # Define three colormaps
+    top = cm.get_cmap('hot_r', 128) # r means reversed version
+    top = ListedColormap(top(np.linspace(0.3, 0.8, 256)))
+        
+    bottom = cm.get_cmap('Blues', 128)
+    bottom = ListedColormap(bottom(np.linspace(0, 0.8, 256)))
+
+    middle = cm.get_cmap('viridis', 256)
+    middle = ListedColormap(middle(np.linspace(0.3, 1, 256)))
+    
+    # Combine the colormaps    
+    newcolors = np.vstack((bottom(np.linspace(0, 1, p3)), middle(np.linspace(0, 1, p2)),top(np.linspace(0, 1, p1))))
+     
+    # Create the final colormap
+    cmp = ListedColormap(newcolors, name='nicecmp')
+    
+    return cmp
