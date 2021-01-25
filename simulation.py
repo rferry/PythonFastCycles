@@ -14,6 +14,43 @@ from scipy.signal import find_peaks
 
 class Simulation:
     def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R', frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):
+        """
+        Initialise of Simulation class. Compute Lnuc. 
+
+        Parameters
+        ----------
+        path : string
+            Path to problems directory. 
+        simuname : string
+            Name of the simulation.
+        mu : float
+            Shear stress modulus in Pa.
+        a : float
+            Frictional empirical parameter.
+        b : float
+            Frictional empirical parameter.
+        fric_law : str, optional
+            Friction law used by FastCycles. Can be :
+                * RateStateAgeing_R
+                * RateStateAgeing
+                * RateStateSlip_R
+                * RateStateSlip
+            '_R' means Regularized version of the Friction Law. The default is 
+            'RateStateAgeing_R'.
+        frac_mode : str, optional
+            Fracture mode. Can be'ModeII' or 'ModeIII'. The default is 
+            'ModeIII'.
+        sigma_N : float, optional
+            Normal stress. The default is -1e8.
+        Dc : float, optional
+            Critical distance Dc. The default is 1e-3.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Store parameters 
         self.path = path + simuname + '/'
         self.simuname = simuname
         self.mu = mu
@@ -27,7 +64,85 @@ class Simulation:
         # Compute Lnuc
         self.Lnuc = - (self.mu * self.Dc) / (self.sigma_N * (self.b - self.a))
 
-    def create_all_files(self, L_over_Lnuc, sigma_dot, geom_type, D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], a1=[5.0e+4], a2=[86400.0], a3=[0.000], Vval_x1='default', Vval_x2='default', Vval_pourc=0.001, stop_crit=1, max_it=10000, final_time=10000000, nf=False):
+    def create_all_files(self, L_over_Lnuc, sigma_dot, geom_type, D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0], Vval_x1='default', Vval_x2='default', Vval_pourc=0.001, stop_crit=1, max_it=10000, final_time=10000000, nf=False):
+        """
+        Create all files for a simulation, i.e. "config.in", "geometry.in", 
+        "tides.in", "GPS.in".
+
+        Parameters
+        ----------
+        L_over_Lnuc : real
+            Length of the fault express as the ratio L/Lnuc.
+        sigma_dot : array 3*3 of float
+            Loading rate symmetrical matrix.
+        geom_type : string
+            Geometry of the fault system. Can be 
+                * "1fault" for a single fault of length L defines with 
+                  L_over_Lnuc 
+                * "2faults_overlapping" for a configuration like Romanet et al. 
+                  (2018).
+                  Space between two faults can be specified with D_over_Lnuc
+                  and the overlap with overlap       
+                                 L/Lnuc * overlap
+                         <--->   
+                         ==========
+                          | D/Lnuc  
+                    ==========
+                    <-------->
+                      L/Lnuc
+        D_over_Lnuc : real
+            Distance between the two fault express as the ratio D/Lnuc. Default
+            is 0.1.
+        overlap : real
+            Portion of the fault overlapping. 0 < overlap < 1. Default is 0.5.
+            overlap = 0:
+                      =======
+               ======= 
+            overlap = 1:
+                =======
+                =======
+        GPSx : list
+            First coordinate of the GPS station. Default is [10].
+        GPSy : list
+            Second cooridnate of the GPS station. Default is [10].
+        Tampli : array of float, optional
+            Amplitude of the waves. The default is [0.0]
+        Tperiod : array of float, optional
+            Period of the waves. The default is [0.0].
+        Tphase : array of float, optional
+            Phase of the waves. The default is [0.0].
+        Vval_x1 and Vval_x2: float, optional
+            The initial velocity perturbation is imposed between Vval_x1 and 
+            Vval_x2. The default is between 0.4*Lnuc and 0.6*Lnuc.
+        Vval_pourc : float, optional
+            Amplitude of the initial perturbation as a percentage of V0. The 
+            default is 0.001.
+        stop_crit : int, optional
+            Criteria to stop the simulation. Can be 0, 1 or 2.
+                * 0 : simulation will stop after the first event
+                * 1 : simulation will stop after max_it iterations
+                * 2 : simulation will stop at final_time
+            The default is 1.
+        max_it : int, optional
+            Number of iteration for the simulation. It will only be taken into
+            consideration if stop_crit = 1. The default is 10000.
+        final_time : float, optional
+            Time in seconds at which the simulation will stop. It will only be 
+            taken into consideration if stop_crit = 2. The default is 10000000.
+        nf : int, optional
+            Number of fault. If not specified, the number of fault will be 
+            read in the "geometry.in" file. The default is not specified.
+
+        Raises
+        ------
+        Exception
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         # Creates the directory for the simulation
         try:
             os.mkdir(self.path)
@@ -35,7 +150,7 @@ class Simulation:
             pass
 
         self.L_over_Lnuc = L_over_Lnuc
-        self.create_tides_file(a1, a2, a3)
+        self.create_tides_file(Tampli, Tperiod, Tphase)
         self.create_GPS_file(GPSx, GPSy)
 
         if geom_type == '1fault':
@@ -57,18 +172,17 @@ class Simulation:
 
         Parameters
         ----------
-        path : string
-            Path to the directory.
-        x1 : list
-            First coordinate of the GPS station.
-        x2 : list
-            Second cooridnate of the GPS station.
+        GPSx : list
+            First coordinate of the GPS station. Default is [10].
+        GPSy : list
+            Second cooridnate of the GPS station. Default is [10].
 
         Returns
         -------
         None.
 
         """
+        # Store GPS coordinates
         self.GPSx = GPSx
         self.GPSy = GPSy
 
@@ -88,23 +202,42 @@ class Simulation:
 
     def create_tides_file(self, Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0]):
         """
-        Creates tides.in at the location 'path'.
+        Create "tides.in" file in the simulation directory. Default is no 
+        tides.
 
+        Parameters
+        ----------
+        Tampli : array of float, optional
+            Amplitude of the waves. The default is [0.0]
+        Tperiod : array of float, optional
+            Period of the waves. The default is [0.0].
+        Tphase : array of float, optional
+            Phase of the waves. The default is [0.0].
+
+        Returns
+        -------
+        None.
 
         """
+        # Store tides informations 
         self.Tampli = Tampli
         self.Tperiod = Tperiod
         self.Tphase = Tphase
 
+        # Check if inputs are consistent
         if len(self.Tampli) != len(self.Tperiod) != len(self.Tphase):
+            # If not consistent
             print('a1, a2 and a3 are not of the same size !')
         else:
+            # If consistent
             content = []
+            # Loop over the waves
             for i, el in enumerate(self.Tampli):
                 content.append('{} {} {} \n'.format(
                     el, self.Tperiod[i], self.Tphase[i]))
             content.append('/')
 
+            # Write the file 
             with open(self.path + 'tides.in', 'w') as file:
                 for line in content:
                     file.write(line)
@@ -112,6 +245,55 @@ class Simulation:
         return
 
     def create_config_file(self, sigma_dot, Vval_x1='default', Vval_x2='default', Vval_pourc=0.001, stop_crit=1, max_it=10000, final_time=10000000, nf=False):
+        """
+        Create "config.in" file in the simulation directory.
+
+        Parameters
+        ----------
+        sigma_dot : array 3*3 of float
+            Loading rate symmetrical matrix.
+        Vval_x1 and Vval_x2: float, optional
+            The initial velocity perturbation is imposed between Vval_x1 and 
+            Vval_x2. The default is between 0.4*Lnuc and 0.6*Lnuc.
+        Vval_pourc : float, optional
+            Amplitude of the initial perturbation as a percentage of V0. The 
+            default is 0.001.
+        stop_crit : int, optional
+            Criteria to stop the simulation. Can be 0, 1 or 2.
+                * 0 : simulation will stop after the first event
+                * 1 : simulation will stop after max_it iterations
+                * 2 : simulation will stop at final_time
+            The default is 1.
+        max_it : int, optional
+            Number of iteration for the simulation. It will only be taken into
+            consideration if stop_crit = 1. The default is 10000.
+        final_time : float, optional
+            Time in seconds at which the simulation will stop. It will only be 
+            taken into consideration if stop_crit = 2. The default is 10000000.
+        nf : int, optional
+            Number of fault. If not specified, the number of fault will be 
+            read in the "geometry.in" file. The default is not specified.
+
+        Raises
+        ------
+        Exception
+            Vval_x1 and Vval_x2 must be both specified or both set to default 
+            value.            
+            You must specify a fault number or create geometry.in first
+        TypeError
+            Stop_criteria should be 0, 1 or 2..
+        ValueError
+            Vval_x1 should be inferior to Vval_x2.
+
+        Returns
+        -------
+        None.
+
+        """
+        # TODO ! Implement possibility to specify different a, b, Dc etc. for 
+        # all faults
+        
+        # Store simulation parameters 
         self.sigma_dot = sigma_dot
         self.Vval_x1 = Vval_x1
         self.Vval_x2 = Vval_x2
@@ -121,6 +303,7 @@ class Simulation:
         self.final_time = final_time
         self.nf = nf
 
+        # Preliminary check for Vval_x1 and Vval_x2
         if Vval_x1 == 'default' and Vval_x2 == 'default':
             self.Vval_x1 = 0.4 * self.Lnuc
             self.Vval_x2 = 0.6 * self.Lnuc
@@ -130,13 +313,13 @@ class Simulation:
         elif Vval_x1 != 'default' and Vval_x2 == 'default':
             raise Exception(
                 'Vval_x1 and Vval_x2 must be both specified or both set to default value. Here Vval_x1 is default value but Vval_x2 is not.')
-
-        # Preliminary checks
-        if stop_crit not in [0, 1, 2]:
-            raise TypeError('stop_criteria should be 0, 1 or 2')
-
+        
         if Vval_x1 > Vval_x2:
             raise ValueError('Vval_x1 should be inferior to Vval_x2')
+            
+        # Preliminary check for stop_criteria
+        if stop_crit not in [0, 1, 2]:
+            raise TypeError('stop_criteria should be 0, 1 or 2')
 
         # Computes Lb
         self.Lb = - (self.mu * self.Dc) / (self.sigma_N * self.b)
@@ -144,6 +327,7 @@ class Simulation:
         # Get fault number if unspecified
         if self.nf is False:
             try:
+                # Read "geometry.in"
                 with open(self.path + 'geometry.in') as file:
                     content = file.read()
                 self.nf = content.count('/')
@@ -174,6 +358,7 @@ class Simulation:
                    'sigma32_dot_inf = {} \n'.format(self.sigma_dot[1, 2]),
                    '/\n']
 
+        # Create one "&fault_friction" section per fault
         for i in range(self.nf):
             content += ['&fault_friction\n',
                         "a_distr = 'CST'\n",
@@ -186,7 +371,9 @@ class Simulation:
                         "V0_distr = 'CST'\n",
                         'V0_val = -1.000e+00,-1.000e+00,1e-09,1e-09\n',
                         '/\n']
-
+        
+        # Create "&fault_initial_condition" for the first fault, where the 
+        # initial perturbation will occur
         content += ['&fault_initial_condition\n',
                     "slip_distr = 'CST'\n",
                     'slip_val = -1.000e+00,-1.000e+00,0,0\n',
@@ -200,7 +387,8 @@ class Simulation:
                         self.sigma_N, self.sigma_N),
                     'ds = {}\n'.format(self.Lb/10),
                     '/\n']
-
+        
+        # Create "&fault_initial_condition" for all other faults 
         for i in range(self.nf - 1):
             content += ['&fault_initial_condition\n',
                         "slip_distr = 'CST'\n",
@@ -237,7 +425,7 @@ class Simulation:
                     'freq_writing_file = 1000\n',
                     '/']
 
-        # Create config.in
+        # Write config.in
         with open(self.path + 'config.in', 'w') as file:
             for line in content:
                 file.write(line)
@@ -300,7 +488,7 @@ class Simulation:
         D_over_Lnuc : real
             Distance between the two fault express as the ratio D/Lnuc.
         L_over_Lnuc : real
-            Length of the faul express as the ratio L/Lnuc.
+            Length of the fault express as the ratio L/Lnuc.
         overlap : real
             Portion of the fault overlapping. 0 < overlap < 1.
             overlap = 0:

@@ -25,7 +25,7 @@ from tools import nice_colormap
 class ReadData:
     def __init__(self, path):
         """
-        Initialisation of the class. Call functions to read data.
+        Initialisation of ReadData class. Call functions to read data.
 
         Parameters
         ----------
