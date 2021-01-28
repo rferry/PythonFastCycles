@@ -3,14 +3,7 @@ Class to create all files for a simulation.
 
 First version by R. Ferry on January 2021.
 """
-import numpy as np
-import sys
 import os
-from scipy.io import FortranFile
-import matplotlib
-import matplotlib.pyplot as plt
-from scipy.signal import find_peaks
-
 
 class Simulation:
     def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R', frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):

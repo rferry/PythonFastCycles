@@ -3,29 +3,21 @@ Class to read data.
 
 First version by R.Ferry on January 2021.
 """
+# External imports
 import numpy as np
-import sys
 import os
 from scipy.io import FortranFile
-import matplotlib
 import matplotlib.pyplot as plt
-from scipy.signal import find_peaks
 import matplotlib.colors as colors 
-
-from matplotlib import cm 
-from matplotlib.colors import ListedColormap,LinearSegmentedColormap
-
-from mpl_toolkits.axes_grid1 import ImageGrid
-
 import matplotlib.ticker as ticker
 
-
+# Internal import
 from tools import nice_colormap
 
 class ReadData:
     def __init__(self, path):
         """
-        Initialisation of ReadData class. Call functions to read data.
+        Initialisation of the class. Call functions to read data.
 
         Parameters
         ----------
@@ -45,6 +37,12 @@ class ReadData:
         
         # Read geometry.out
         self.read_geometry_out()
+        
+        # Read GPS.in
+        self.read_GPS()
+        
+        # Read GPSRate.out
+        self.read_GPS_rate()
 
         # Total number of elements
         # Each fault is separated by a fake element
@@ -70,7 +68,7 @@ class ReadData:
         self.Lnuc = []
         for i in range(self.nbr_fault):
             self.L.append(self.elements[i] * self.ds[i])
-            self.Lnuc.append((self.mu * self.Dc[i]) / (self.sigmaN[i] * (self.b[i] - self.a[i])))
+            self.Lnuc.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * (self.b[i] - self.a[i])))
 
     def read_binary_file(self, file_type):
         """
@@ -243,7 +241,7 @@ class ReadData:
 
     def read_config(self):
         """
-        Read "config.in" file to get simulation parameters
+        Read "config.in" file to get simulation parameters.
 
         Returns
         -------
@@ -303,13 +301,115 @@ class ReadData:
         self.ds = ds
         self.sigma_dot = sigma_dot 
     
-    def read_GPS_rate(self):
-        # TODO !
-        pass
+    def read_GPS(self):
+        """
+        Read "GPS.in" file to get GPS stations coordinates.
 
+        Returns
+        -------
+        None.
+
+        """
+        # Open config.in and read content
+        with open(self.path + 'GPS.in', 'r') as file:
+            content = file.readlines()
+        
+        # Initialisation
+        GPSx = []
+        GPSy = []
+        
+        # Loop over all stations 
+        for i, line in enumerate(content[:-1]):
+            GPSx.append(float(line.split()[0]))
+            GPSy.append(float(line.split()[1]))
+        
+        # Store data 
+        self.GPSx = GPSx
+        self.GPSy = GPSy
+        
+    def read_GPS_rate(self):
+        """
+        Read "GPSRate.out" file to get GPS rate time and GPS rate for all GPS
+        stations.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Open and read GPSRate.out
+        with open(self.path + 'GPSRate.out', 'r') as file:
+            content = file.readlines()
+            
+        tGPSrate = [] # to store GPS rate time
+        GPSrate = [] # to store GPS rate for each GPS station
+        nGPS = len(self.GPSx) # number of GPS stations
+        # stores GPSrate data temporary
+        GPSrate_temp = np.ones((len(content)-2, nGPS))
+        for i, line in enumerate(content[2:]):  # [2:] to skip headers
+            tGPSrate.append(float(line.split()[1]))
+            for j in range(nGPS):  # Loop over GPS stations 
+                GPSrate_temp[i, j] = line.split()[2+j]
+        for i in range(nGPS):
+            GPSrate.append(GPSrate_temp[:, i])
+
+        # Stores results
+        self.tGPSrate = tGPSrate
+        self.GPSrate = GPSrate
+        
     def read_EQcatalog(self):
-        # TODO !
-        pass
+        # Open and read Eqcatalog
+        with open(self.path + 'EQcatalog', 'r') as file:
+            content = file.readlines()
+            
+        # Initialisation
+        EQcatalog = []  # Catalog per fault
+        for i in range(self.nbr_fault):
+            EQcatalog.append({})
+        EQgeneral_catalog = {} # common catalog for all fault
+        string = ['Fault', 'Type', 'Time Beg', 'Nucleation dur', 'Rupture dur', 
+                  'After slip dur', 'Time Index Beg', 'Time Index Beg Dyn', 
+                  'Time Index End Dyn', 'Time Index End', 'Location X', 
+                  'Location Y']
+        for i, el in enumerate(string):
+            EQgeneral_catalog[el] = []
+            for j in range(self.nbr_fault):
+                EQcatalog[j][el] = []
+        
+        for i, line in enumerate(content[2:]):  # [2:] to skip headers
+            # Building general catalog
+            EQgeneral_catalog['Fault'].append(int(line.split()[1]))
+            EQgeneral_catalog['Type'].append(int(line.split()[2]))
+            EQgeneral_catalog['Time Beg'].append(float(line.split()[3]))
+            EQgeneral_catalog['Nucleation dur'].append(float(line.split()[4]))
+            EQgeneral_catalog['Rupture dur'].append(float(line.split()[5]))
+            EQgeneral_catalog['After slip dur'].append(float(line.split()[6]))  
+            EQgeneral_catalog['Time Index Beg'].append(int(line.split()[7])) 
+            EQgeneral_catalog['Time Index Beg Dyn'].append(int(line.split()[8]))  
+            EQgeneral_catalog['Time Index End Dyn'].append(int(line.split()[9]))   
+            EQgeneral_catalog['Time Index End'].append(int(line.split()[10]))
+            EQgeneral_catalog['Location X'].append(float(line.split()[11]))
+            EQgeneral_catalog['Location Y'].append(float(line.split()[12])) 
+            
+            # Add the event to the fault's catalog
+            fault = int(line.split()[1]) - 1
+            EQcatalog[fault]['Type'].append(int(line.split()[2]))
+            EQcatalog[fault]['Time Beg'].append(float(line.split()[3]))
+            EQcatalog[fault]['Nucleation dur'].append(float(line.split()[4]))
+            EQcatalog[fault]['Rupture dur'].append(float(line.split()[5]))
+            EQcatalog[fault]['After slip dur'].append(float(line.split()[6]))  
+            EQcatalog[fault]['Time Index Beg'].append(int(line.split()[7])) 
+            EQcatalog[fault]['Time Index Beg Dyn'].append(int(line.split()[8]))  
+            EQcatalog[fault]['Time Index End Dyn'].append(int(line.split()[9]))   
+            EQcatalog[fault]['Time Index End'].append(int(line.split()[10]))
+            EQcatalog[fault]['Location X'].append(float(line.split()[11]))
+            EQcatalog[fault]['Location Y'].append(float(line.split()[12])) 
+             
+        # Store data
+        self.EQgeneral_catalog = EQgeneral_catalog
+        self.EQcatalog = EQcatalog
+        
+        return
 
     def plot_max_vel(self, ssel=1e-8, eql=1e-3, start=0, stop=None, savefig=True):
         """
@@ -377,9 +477,10 @@ class ReadData:
             # Avoid white space between start and en of axis
             axs[i, 0].margins(x=0)
 
-            # Write subplot title
-            axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
-            axs[i, 0].yaxis.set_label_position("right")
+            # Write subplot title if there is more than one fault
+            if self.nbr_fault > 1 :
+                axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+                axs[i, 0].yaxis.set_label_position("right")
 
             # Draw SSE and EQ horizontal lines
             axs[i, 0].axhline(ssel, color='lightgreen',
@@ -440,11 +541,14 @@ class ReadData:
         # Invert x-axis
         axs[0].invert_xaxis()
         
+        # x axis label
+        axs[0].set_xlabel('$V \ (m.s^{-1})$', fontsize=12)
+        
         # y axis label
-        axs[0].set_ylabel('Time (year)')
+        axs[0].set_ylabel('Time (year)', fontsize=12)
         
         # Set y ticks at every power of 10
-        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=15))
+        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=6))
         
         ##################
         # Plot slip rate #
@@ -463,13 +567,26 @@ class ReadData:
             
             # Plot
             # norm=colors.LogNorm(vmin=self.velocity[i][0:idxlim].min(), vmax=self.velocity[i][0:idxlim].max())
-            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], norm=colors.LogNorm(vmin=1e-12, vmax=1), cmap=cmp)
+            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], norm=colors.LogNorm(vmin=1e-12, vmax=1),shading='nearest', cmap=cmp)
        
             # Remove frame            
             axs[i+1].spines["right"].set_visible(False)
             axs[i+1].spines["left"].set_visible(False)
             axs[i+1].spines["top"].set_visible(False)
             axs[i+1].axes.yaxis.set_visible(False)
+            
+            # x axis coordinate in X/Lnuc
+            # TODO ! Needs to be improved 
+            nticks = 5 # Number of ticks
+            L_over_Lnuc = round(self.L[i] / self.Lnuc[i], 1)
+            labels = np.linspace(-L_over_Lnuc/2, L_over_Lnuc/2, nticks)
+            left, right = axs[i+1].get_xlim()
+            tick_loc = np.linspace(left, right, nticks)
+            axs[i+1].set_xticks(tick_loc)
+            axs[i+1].set_xticklabels(labels)
+            
+            # x axis label
+            axs[i+1].set_xlabel('$X/L_{nuc}$', fontsize=12)
             
         
         ############
@@ -494,3 +611,74 @@ class ReadData:
     def plot_moment_rate(self):
         # TODO !
         pass
+    
+    def plot_geometry(self, scale='Lnuc', savefig=True):
+        """
+        Plot the fault system geometry.
+
+        Parameters
+        ----------
+        scale : str, optional
+            Scale of axis. Can be 'Lnuc' (normalised by Lnuc) or 'X'. The 
+            default is 'Lnuc'.
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "slip_rate_evolution.png". The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        # TODO ! Add GPS station plot 
+        # Computing figure limits 
+        maxi = -np.inf
+        mini = np.inf
+        for i in range(self.nbr_fault):
+            maxtemp = np.max(self.ey[i])
+            mintemp = np.min(self.ey[i])
+            if maxtemp > maxi:
+                maxi = maxtemp
+            if mintemp < mini:
+                mini = mintemp
+        if scale == 'Lnuc':        
+            mini = mini / self.Lnuc[0]
+            maxi = maxi / self.Lnuc[0]
+        Ly = maxi-mini # extend in y direction of the fault system
+        
+        # Initialise figure
+        fig, ax = plt.subplots(1, 1)
+        
+        # Plot each fault 
+        for i in range(self.nbr_fault):
+            if scale== 'Lnuc':
+                x = [el/self.Lnuc[0] for el in self.ex[i]]
+                y = [el/self.Lnuc[0] for el in self.ey[i]]
+            else:
+                x = self.ex[i]
+                y = self.ey[i]
+            
+            ax.plot(x, y, 'b')
+        
+            # Add fault "label"
+            xtext = 0.5 *(np.max(x) + np.min(x))
+            ytext = 0.5 *(np.max(y) + np.min(y))
+            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', ec='none', pad=1), ha='center', va='center')
+            
+        # Set axis limits and aspect 
+        ax.set_ylim(mini - Ly*3, maxi + Ly*3)
+        ax.set_aspect('equal')
+        
+        # Labels
+        if scale == 'Lnuc':
+            ax.set_xlabel('$X/L_{nuc}$', fontsize=12)
+            ax.set_ylabel('$Y/L_{nuc}$', fontsize=12)
+        else:
+            ax.set_xlabel('$X$', fontsize=12)
+            ax.set_ylabel('$Y$', fontsize=12)
+            
+        # Change tick size    
+        ax.tick_params(axis='both', which='major', labelsize=10)    
+        
+        if savefig:
+            fig.savefig(self.path + 'geometry.png', dpi=400)
