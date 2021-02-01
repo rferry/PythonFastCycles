@@ -1,12 +1,13 @@
 """
 Class to read data. 
 
-First version by R.Ferry on January 2021.
+First version by R. Ferry on January 2021.
 """
 # External imports
 import numpy as np
 import os
 from scipy.io import FortranFile
+import scipy.integrate 
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors 
 import matplotlib.ticker as ticker
@@ -68,7 +69,8 @@ class ReadData:
         self.Lnuc = []
         for i in range(self.nbr_fault):
             self.L.append(self.elements[i] * self.ds[i])
-            self.Lnuc.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * (self.b[i] - self.a[i])))
+            self.Lnuc.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
+                                                    (self.b[i] - self.a[i])))
 
     def read_binary_file(self, file_type):
         """
@@ -194,7 +196,7 @@ class ReadData:
         None.
 
         """
-        # TODO ! Add check if self.velocity is defined
+        # Initialisation
         max_vel = []
         # Loop over the faults
         for i in range(self.nbr_fault):
@@ -283,13 +285,16 @@ class ReadData:
                 sigma_dot[1, 1] = float(line.split()[2])
             elif line.startswith('sigma33_dot_inf'):
                 sigma_dot[2, 2] = float(line.split()[2])
-            elif line.startswith('sigma12_dot_inf') or line.startswith('sigma21_dot_inf'):
+            elif line.startswith('sigma12_dot_inf') or \
+                    line.startswith('sigma21_dot_inf'):
                 sigma_dot[0, 1] = float(line.split()[2])  
                 sigma_dot[1, 0] = float(line.split()[2])
-            elif line.startswith('sigma31_dot_inf') or line.startswith('sigma13_dot_inf'):
+            elif line.startswith('sigma31_dot_inf') or \
+                    line.startswith('sigma13_dot_inf'):
                 sigma_dot[0, 2] = float(line.split()[2])  
                 sigma_dot[2, 0] = float(line.split()[2])
-            elif line.startswith('sigma32_dot_inf') or line.startswith('sigma23_dot_inf'):
+            elif line.startswith('sigma32_dot_inf') or \
+                    line.startswith('sigma23_dot_inf'):
                 sigma_dot[2, 1] = float(line.split()[2])  
                 sigma_dot[1, 2] = float(line.split()[2])  
         
@@ -300,6 +305,35 @@ class ReadData:
         self.sigmaN = sigmaN
         self.ds = ds
         self.sigma_dot = sigma_dot 
+    
+    def read_tides(self):
+        """
+        Read "tides.in" to get amplitude, period and phase of the waves.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Open tides.in and read content
+        with open(self.path + 'tides.in', 'r') as file:
+            content = file.readlines()  
+        
+        # Initialisation
+        Tampli = []
+        Tperiod = []
+        Tphase = []
+        
+        # Loop over all waves
+        for i, line in enumerate(content[:-1]):
+            Tampli.append(float(line.split()[0]))
+            Tperiod.append(float(line.split()[1]))
+            Tphase.append(float(line.split()[2])) 
+        
+        # Store data
+        self.Tampli = Tampli
+        self.Tperiod = Tperiod
+        self.Tphase = Tphase 
     
     def read_GPS(self):
         """
@@ -358,6 +392,15 @@ class ReadData:
         self.GPSrate = GPSrate
         
     def read_EQcatalog(self):
+        """
+        Read "EQcatalog" file to build a general earthquake catalog 
+        (EQgeneral_catalog) and a catalog for each fault (EQcatalog).
+
+        Returns
+        -------
+        None.
+
+        """
         # Open and read Eqcatalog
         with open(self.path + 'EQcatalog', 'r') as file:
             content = file.readlines()
@@ -411,7 +454,12 @@ class ReadData:
         
         return
 
-    def plot_max_vel(self, ssel=1e-8, eql=1e-3, start=0, stop=None, savefig=True):
+    def compute_EQcatalog(self, eql=1e-3, ssel=1e-8):
+        # TODO !
+        pass        
+    
+    def plot_max_vel(self, eql=1e-3, ssel=1e-8, start=0, stop=None, \
+                     savefig=True):
         """
         Plot mamimum slip for all faults.
 
@@ -524,7 +572,7 @@ class ReadData:
         # Time in year
         time = self.time[start:stop]/(365.25*24*3600)
         
-        # fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=True, gridspec_kw={'width_ratios': [2, 2, 2]})
+        # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]})
         fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=True)
         
         ################
@@ -533,7 +581,8 @@ class ReadData:
         
         # Loop over all the fault 
         for i in range(self.nbr_fault):
-            axs[0].plot(self.max_vel[i][start:stop], time, label='Fault {}'.format(i+1))
+            axs[0].plot(self.max_vel[i][start:stop], time, \
+                        label='Fault {}'.format(i+1))
             
         # Put y axis in log
         axs[0].set_xscale('log')
@@ -548,7 +597,8 @@ class ReadData:
         axs[0].set_ylabel('Time (year)', fontsize=12)
         
         # Set y ticks at every power of 10
-        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=6))
+        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, \
+                                                         numticks=6))
         
         ##################
         # Plot slip rate #
@@ -556,18 +606,19 @@ class ReadData:
         
         for i in range(self.nbr_fault):
             # Mask (will display in white) velocity values < vmask
-            velm = np.ma.masked_where(self.velocity[i] < vmask, self.velocity[i])
+            velm = np.ma.masked_where(self.velocity[i] < vmask, \
+                                      self.velocity[i])
             
             # Set the grid
             xx, yy = np.meshgrid(self.ex[i], time)
             
             # Create colormap
-            # cmp = nice_colormap(self.velocity[i][0:idxlim].min(), 1e-8, 1e-3, self.velocity[i][0:idxlim].max())
             cmp = nice_colormap()
             
             # Plot
-            # norm=colors.LogNorm(vmin=self.velocity[i][0:idxlim].min(), vmax=self.velocity[i][0:idxlim].max())
-            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], norm=colors.LogNorm(vmin=1e-12, vmax=1),shading='nearest', cmap=cmp)
+            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], \
+                                     norm=colors.LogNorm(vmin=1e-12, vmax=1), \
+                                         shading='nearest', cmap=cmp)
        
             # Remove frame            
             axs[i+1].spines["right"].set_visible(False)
@@ -608,8 +659,104 @@ class ReadData:
 
         return
         
-    def plot_moment_rate(self):
-        # TODO !
+    def plot_moment_rate(self, start=0, stop=None, savefig=True):
+        """
+        Plot moment rate evolution for all fault and net moment rate.
+
+        Parameters
+        ----------
+        start : int, optional
+            Starting index to plot data. The default is 0.
+        stop : int, optional
+            Last index to plot data. The default is None (i.e. last data)
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "moment_rate_evolution.png". The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Determine yaxis lim --> determine min and max velocity
+        minv = 1000  # ridiculous value to always be below
+        maxv = -9999  # ridiculous value to always be above
+        for i in range(self.nbr_fault):
+            mint = np.min(self.Mrate[i][start:stop])
+            maxt = np.max(self.Mrate[i][start:stop])
+            if mint < minv:
+                minv = mint
+            else:
+                pass
+            if maxt > maxv:
+                maxv = maxt
+            else:
+                pass
+
+        # Time
+        time = np.array(self.tMrate[start:stop]) / (3600*24*365.25)
+
+        # Create figure
+        fig, axs = plt.subplots(self.nbr_fault + 1, 1, squeeze=False)
+
+        # Plot moment rate for each fault
+        for i in range(self.nbr_fault):
+            # Plot data
+            axs[i, 0].plot(time, self.Mrate[i][start:stop], color='red')
+
+            # Set ylim
+            axs[i, 0].set_ylim(minv, maxv*10)
+
+            # Fill between line and O
+            axs[i, 0].fill_between(
+                time, 0, self.Mrate[i][start:stop], color='lightgrey')
+
+            # Write subplot title for each fault
+            axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+            axs[i, 0].yaxis.set_label_position("right") 
+                
+        # Plot net moment rate 
+        axs[self.nbr_fault, 0].plot(time, self.netMrate[start:stop], color='k')
+        
+        # Fill between line and O
+        axs[self.nbr_fault, 0].fill_between(time, 0, \
+                                self.netMrate[start:stop], color='lightgrey')
+        
+        # Write subplot title for net moment rate
+        axs[self.nbr_fault, 0].set_ylabel('Net Mo Rate', fontsize=11)
+        axs[self.nbr_fault, 0].yaxis.set_label_position("right")
+        
+        for ax in fig.axes:
+            # Put y axis in log
+            ax.set_yscale('log')
+            
+            # Avoid white space between start and en of axis
+            ax.margins(x=0)
+            
+            # Create grid
+            ax.grid()
+            
+            # Set tick label size
+            ax.yaxis.set_tick_params(labelsize=9)
+            ax.xaxis.set_tick_params(labelsize=9)
+        
+        # x axis label
+        axs[self.nbr_fault, 0].set_xlabel('Time (year)', fontsize=12)
+
+        # Add common ylabel
+        fig.text(0.01, 0.5, 'Moment Rate ($Nm.s^{-1})$',
+                 va='center', rotation='vertical', fontsize=12)
+        
+        # TODO ! Compute a better EQcatalog to have the right locations
+        # ymin, ymax = axs[self.nbr_fault, 0].get_ylim()
+        
+        # ymax = [ymax] * len(self.EQgeneral_catalog['Time Index Beg'])
+        # tEQ = np.array(self.EQgeneral_catalog['Time Beg']) / (365.25*24*3600)
+        # axs[self.nbr_fault, 0].scatter(tEQ, ymax)
+        
+        # Save if savefig=True
+        if savefig:
+            fig.savefig(self.path + 'moment_rate_evolution.png', dpi=400)
         pass
     
     def plot_geometry(self, scale='Lnuc', savefig=True):
@@ -663,13 +810,14 @@ class ReadData:
             # Add fault "label"
             xtext = 0.5 *(np.max(x) + np.min(x))
             ytext = 0.5 *(np.max(y) + np.min(y))
-            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', ec='none', pad=1), ha='center', va='center')
+            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', \
+                                   ec='none', pad=1), ha='center', va='center')
             
         # Set axis limits and aspect 
         ax.set_ylim(mini - Ly*3, maxi + Ly*3)
         ax.set_aspect('equal')
         
-        # Labels
+        # Axis labels
         if scale == 'Lnuc':
             ax.set_xlabel('$X/L_{nuc}$', fontsize=12)
             ax.set_ylabel('$Y/L_{nuc}$', fontsize=12)
@@ -682,3 +830,186 @@ class ReadData:
         
         if savefig:
             fig.savefig(self.path + 'geometry.png', dpi=400)
+            
+    def plot_GPS_rate(self, start=0, stop=None, savefig=True):
+        """
+        Plot GPS rate for all stations.
+
+        Parameters
+        ----------
+        start : int, optional
+            Starting index to plot data. The default is 0.
+        stop : int, optional
+            Last index to plot data. The default is None (i.e. last data)
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "GPS_rate_evolution.png". The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        # TODO ! See why we have weird negative values
+        # Determine yaxis lim --> determine min and max velocity
+        minv = 1000  # ridiculous value to always be below
+        maxv = -9999  # ridiculous value to always be above
+        for i in range(len(self.GPSrate)):
+            mint = np.min(self.GPSrate[i][start:stop])
+            maxt = np.max(self.GPSrate[i][start:stop])
+            if mint < minv:
+                minv = mint
+            else:
+                pass
+            if maxt > maxv:
+                maxv = maxt
+            else:
+                pass
+
+        # Time
+        time = np.array(self.tGPSrate[start:stop]) / (3600*24*365.25)
+
+        # Create figure
+        fig, axs = plt.subplots(len(self.GPSrate), 1, squeeze=False)
+
+        # Plot GPS rate for each fault
+        for i in range(len(self.GPSrate)):
+            # Plot data
+            axs[i, 0].plot(time, self.GPSrate[i][start:stop], color='red')
+
+            # Set ylim
+            # axs[i, 0].set_ylim(minv, maxv*10)
+
+            # Fill between line and O
+            axs[i, 0].fill_between(
+                time, 0, self.GPSrate[i][start:stop], color='lightgrey')
+
+            # Write subplot title for each fault
+            axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+            axs[i, 0].yaxis.set_label_position("right") 
+                
+        
+        for ax in fig.axes:
+            # Put y axis in log
+            ax.set_yscale('log')
+            
+            # Avoid white space between start and en of axis
+            ax.margins(x=0)
+            
+            # Create grid
+            ax.grid()
+            
+            # Set tick label size
+            ax.yaxis.set_tick_params(labelsize=9)
+            ax.xaxis.set_tick_params(labelsize=9)
+        
+        # x axis label
+        axs[len(self.GPSrate)-1, 0].set_xlabel('Time (year)', fontsize=12)
+
+        # Add common ylabel
+        fig.text(0.01, 0.5, 'GPS Rate ($m.s^{-1})$',
+                 va='center', rotation='vertical', fontsize=12)
+        
+        # Save if savefig=True
+        if savefig:
+            fig.savefig(self.path + 'GPS_rate_evolution.png', dpi=400)
+            
+    def plot_GPS_disp(self, start=0, stop=None, plot_type='all', savefig=True):
+        """
+        Plot GPS cumulative displacement over time.
+
+        Parameters
+        ----------
+        start : int, optional
+            Starting index to plot data. The default is 0.
+        stop : int, optional
+            Last index to plot data. The default is None (i.e. last data)
+        plot_type : string, optional
+            Type of plot. Can be:
+                * 'all': all stations on the same plot
+                * 'each': a subplot for each stations
+            The default is 'all'.
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "GPS_displacement.png". The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        ########################
+        # Compute displacement #
+        ########################
+        
+        disp = []  # to store displacement for each GPS station
+        
+        # Loop over GPS stations
+        for i in range(len(self.GPSrate)):
+            disp_temp = np.zeros(len(self.GPSrate[i]))
+            disp_temp[:] = scipy.integrate.cumtrapz(self.GPSrate[i], self.tGPSrate, initial=0)
+            disp.append(disp_temp)
+        
+        # Store data
+        self.disp = disp
+        
+        ########
+        # Plot #
+        ########
+        
+        # Compute time in year
+        time = np.array(self.tGPSrate[start:stop]) / (3600*24*365.25)
+        
+        # Create figure 
+        if plot_type=='each':
+            fig, axs = plt.subplots(len(self.GPSrate), 1, squeeze=False)
+        elif plot_type=='all':
+            fig, axs = plt.subplots(1, 1, squeeze=False)
+        
+        # Plot each GPS stations
+        for i in range(len(self.GPSrate)):
+            if plot_type=='each':
+                axs[i, 0].plot(time, self.disp[i][start:stop], color='k')
+                axs[i, 0].set_ylabel('Station {}'.format(i+1), fontsize=11)
+                axs[i, 0].yaxis.set_label_position("right")
+            elif plot_type=='all':
+                axs[0, 0].plot(time, self.disp[i][start:stop], label='Station {}'.format(i+1))                
+
+        # EQ time to plot lines for EQ
+        tEQ = np.array(self.EQgeneral_catalog['Time Beg']) / (365.25*24*3600)
+        # Colors of EQ
+        colors=[]
+        for i, el in enumerate(self.EQgeneral_catalog['Type']):
+            if el==1:
+                colors.append('pink') # EQ are in red
+            elif el==2:
+                colors.append('cyan') # Slow slip are in blue
+        
+        # Loop over axes 
+        for ax in fig.axes:
+            # Avoid white space between start and en of axis
+            ax.margins(x=0)
+            ax.margins(y=0)
+            
+            # Set tick label size
+            ax.yaxis.set_tick_params(labelsize=9)
+            ax.xaxis.set_tick_params(labelsize=9)
+            
+            # Plot lines for EQ
+            ymin, ymax = ax.get_ylim()
+            ax.vlines(tEQ, ymin, ymax, colors=colors, linestyle='--')
+        
+        # x axis label
+        axs[len(self.GPSrate)-1, 0].set_xlabel('Time (year)', fontsize=12)
+        
+        # Add common ylabel
+        fig.text(0.01, 0.5, 'Displacement $(m)$', va='center', \
+                 rotation='vertical', fontsize=12)           
+
+        # Plot legend if there is a single plot
+        if plot_type=="all":
+            fig.legend(loc='upper left')
+            
+        # Save if savefig=True
+        if savefig:
+            fig.savefig(self.path + 'GPS_displacements.png', dpi=400)

@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Tue Jan  5 16:35:12 2021
+Script of usefull tools.
 
-@author: roxane
+First version by R. Ferry on January 2021.
 """
 import numpy as np
 import sys

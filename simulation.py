@@ -6,7 +6,8 @@ First version by R. Ferry on January 2021.
 import os
 
 class Simulation:
-    def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R', frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):
+    def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R',\
+                 frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):
         """
         Initialise of Simulation class. Compute Lnuc. 
 
@@ -57,7 +58,12 @@ class Simulation:
         # Compute Lnuc
         self.Lnuc = - (self.mu * self.Dc) / (self.sigma_N * (self.b - self.a))
 
-    def create_all_files(self, L_over_Lnuc, sigma_dot, geom_type, D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0], Vval_x1='default', Vval_x2='default', Vval_pourc=0.001, stop_crit=1, max_it=10000, final_time=10000000, nf=False):
+    def create_all_files(self, L_over_Lnuc, sigma_dot, geom_type, \
+                         D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], \
+                         Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0], \
+                         Vval_x1='default', Vval_x2='default', \
+                         Vval_pourc=0.001, stop_crit=1, max_it=10000, \
+                         final_time=10000000, nf=False):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in", "GPS.in".
@@ -156,8 +162,8 @@ class Simulation:
         else:
             raise Exception('geom_type does not exist.')
 
-        self.create_config_file(
-            sigma_dot, Vval_x1, Vval_x2, Vval_pourc, stop_crit, max_it, final_time, nf)
+        self.create_config_file(sigma_dot, Vval_x1, Vval_x2, Vval_pourc, \
+                                stop_crit, max_it, final_time, nf)
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
@@ -237,7 +243,9 @@ class Simulation:
 
         return
 
-    def create_config_file(self, sigma_dot, Vval_x1='default', Vval_x2='default', Vval_pourc=0.001, stop_crit=1, max_it=10000, final_time=10000000, nf=False):
+    def create_config_file(self,sigma_dot,Vval_x1='default',Vval_x2='default',\
+                           Vval_pourc=0.001, stop_crit=1, max_it=10000, \
+                           final_time=10000000, nf=False):
         """
         Create "config.in" file in the simulation directory.
 
@@ -302,10 +310,14 @@ class Simulation:
             self.Vval_x2 = 0.6 * self.Lnuc
         elif Vval_x1 == 'default' and Vval_x2 != 'default':
             raise Exception(
-                'Vval_x1 and Vval_x2 must be both specified or both set to default value. Here Vval_x1 is default value but Vval_x2 is not.')
+                'Vval_x1 and Vval_x2 must be both specified or both set to \
+                    default value. Here Vval_x1 is default value but Vval_x2 \
+                    is not.')
         elif Vval_x1 != 'default' and Vval_x2 == 'default':
             raise Exception(
-                'Vval_x1 and Vval_x2 must be both specified or both set to default value. Here Vval_x1 is default value but Vval_x2 is not.')
+                'Vval_x1 and Vval_x2 must be both specified or both set to \
+                    default value. Here Vval_x1 is default value but Vval_x2 \
+                    is not.')
         
         if Vval_x1 > Vval_x2:
             raise ValueError('Vval_x1 should be inferior to Vval_x2')
@@ -325,7 +337,7 @@ class Simulation:
                     content = file.read()
                 self.nf = content.count('/')
             except Exception:  # if geometry.in do not exist
-                print('You must specify a fault number or create geometry.in first')
+                print('You must specify a fault number or create geometry.in')
         
         # Reference velocity       
         V0_val = 1e-9  # TODO ! Option to change V0_val ?  
@@ -374,7 +386,8 @@ class Simulation:
                     'V_val = {},{},1e-09,{}e-09\n'.format(
                         self.Vval_x1, self.Vval_x2, 1 + self.Vval_pourc),
                     "theta_distr = 'CST'\n",
-                    'theta_val = -1.000e+00,-1.000e+00,{},{}\n'.format(self.theta_val, self.theta_val),
+                    'theta_val = -1.000e+00,-1.000e+00,{},{}\n'.format(
+                        self.theta_val, self.theta_val),
                     "sigmaN_distr = 'CST'\n",
                     'sigmaN_val = -1,-1,{},{}\n'.format(
                         self.sigma_N, self.sigma_N),
@@ -389,7 +402,8 @@ class Simulation:
                         "V_distr = 'CST'\n",
                         'V_val = -1.000e+00,-1.000e+00,1e-09,1e-09\n',
                         "theta_distr = 'CST'\n",
-                        'theta_val = -1.000e+00,-1.000e+00,{},{}\n'.format(self.theta_val, self.theta_val),
+                        'theta_val = -1.000e+00,-1.000e+00,{},{}\n'.format(
+                            self.theta_val, self.theta_val),
                         "sigmaN_distr = 'CST'\n",
                         'sigmaN_val = -1,-1,{},{}\n'.format(
                             self.sigma_N, self.sigma_N),
@@ -427,8 +441,8 @@ class Simulation:
 
     def create_geom_1fault(self, x1, x2):
         """
-        Creates geometry.in file for a simple fault configuration with two points 
-        (x1, 0) and (x2, 0).
+        Creates geometry.in file for a simple fault configuration with two 
+        points (x1, 0) and (x2, 0).
 
         Parameters
         ----------
@@ -462,7 +476,8 @@ class Simulation:
 
     def create_geom_2_faults_overlapping(self, D_over_Lnuc, L_over_Lnuc, overlap):
         """
-        Create geometry.in file for a 2 faults overlapping geometry (as in Romanet et al. (2018), GRL).
+        Create geometry.in file for a 2 faults overlapping geometry (as in 
+        Romanet et al. (2018), GRL).
 
              L/Lnuc * overlap
              <--->   
