@@ -7,11 +7,12 @@ setuptools.setup(
     name="PythonFastCycles", 
     version="1.0.1",
     author="Roxane Ferry",
+    author_email='roxane.ferry@ens.fr',
     description="Package to interact with FastCycles",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/rferry/PythonFastCycles",
-    packages=['process_data', 'tools', 'simulation'],
+    packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",

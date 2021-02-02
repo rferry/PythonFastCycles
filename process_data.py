@@ -87,7 +87,9 @@ class ReadData:
         None.
 
         """
-
+        # Verbose
+        print('Reading {} files...'.format(file_type))
+        
         files = []  # list of files of the right type
         # Loops over the files and select those with 'file_type' in their name
         for file_name in self.files_in_dir:
@@ -102,7 +104,6 @@ class ReadData:
         # Loops over selected files and read them
         for file in files:
             f = FortranFile(self.path + file, 'r')
-            print(self.path)
             if file_type in ['velocity', 'tractionN', 'theta']:
                 content = f.read_reals(dtype='f8')
                 data_temp.append(content.reshape(
@@ -143,6 +144,9 @@ class ReadData:
         elif file_type == 'tractionN':
             self.tractionN = data
 
+        # Verbose
+        print("...{} files read. \n".format(file_type))
+        
     def read_geometry_out(self):
         """
         Read "geometry.out" file to get the number of fault, the number of 
@@ -947,7 +951,8 @@ class ReadData:
         # Loop over GPS stations
         for i in range(len(self.GPSrate)):
             disp_temp = np.zeros(len(self.GPSrate[i]))
-            disp_temp[:] = scipy.integrate.cumtrapz(self.GPSrate[i], self.tGPSrate, initial=0)
+            disp_temp[:] = scipy.integrate.cumtrapz(self.GPSrate[i], \
+                                                    self.tGPSrate, initial=0)
             disp.append(disp_temp)
         
         # Store data
@@ -973,7 +978,8 @@ class ReadData:
                 axs[i, 0].set_ylabel('Station {}'.format(i+1), fontsize=11)
                 axs[i, 0].yaxis.set_label_position("right")
             elif plot_type=='all':
-                axs[0, 0].plot(time, self.disp[i][start:stop], label='Station {}'.format(i+1))                
+                axs[0, 0].plot(time, self.disp[i][start:stop], \
+                               label='Station {}'.format(i+1))                
 
         # EQ time to plot lines for EQ
         tEQ = np.array(self.EQgeneral_catalog['Time Beg']) / (365.25*24*3600)

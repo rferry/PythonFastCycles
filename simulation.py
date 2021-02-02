@@ -9,7 +9,7 @@ class Simulation:
     def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R',\
                  frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):
         """
-        Initialise of Simulation class. Compute Lnuc. 
+        Initialise Simulation class. Compute Lnuc. 
 
         Parameters
         ----------
@@ -66,7 +66,7 @@ class Simulation:
                          final_time=10000000, nf=False):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
-        "tides.in", "GPS.in".
+        "tides.in" and "GPS.in".
 
         Parameters
         ----------
