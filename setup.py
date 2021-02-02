@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="PythonFastCycles", 
-    version="1.0",
+    version="1.0.1",
     author="Roxane Ferry",
     description="Package to interact with FastCycles",
     long_description=long_description,
