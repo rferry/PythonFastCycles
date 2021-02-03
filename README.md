@@ -17,14 +17,16 @@ Run in a terminal:
 `path = 'path/to/fastcycles/problems/' `
 
 #### Defines parameters
-`fric_law = 'RateStateAgeing_R'
+```
+fric_law = 'RateStateAgeing_R'
 frac_mode = 'ModeIII'
 
 mu = 3e10 
 Dc = 1e-3
 sigma_N = -1e8
 a = 0.0075
-b = 0.01`
+b = 0.01
+```
 
 The lenght of the fault $L$ is defined with the ratio $L / L{nuc}$. $L_{nuc}$ is computed automatically.    
 
@@ -32,18 +34,20 @@ The lenght of the fault $L$ is defined with the ratio $L / L{nuc}$. $L_{nuc}$ is
 
 Defines $\dot \sigma$
 
-`s11 = 0.00e+00
+```
+s11 = 0.00e+00
 s22 = 0.00e+00
 s33 = 0.00e+00
 s12 = 0.00e+00
 s13 = 0.00e+00
 s23 = 0.1
 
-sigma_dot = np.array([[s11, s12, s13], [s12, s22, s23], [s13, s23, s33]])`   
+sigma_dot = np.array([[s11, s12, s13], [s12, s22, s23], [s13, s23, s33]])
+```
 
 ## References
 <a id="1">[1]</a> 
 Romanet et al. (2018). 
-ast and slow slip events emerge due tofault geometrical complexity. 
+ast and slow slip events emerge due to fault geometrical complexity. 
 *Geophysical Research Letters*, 45(10), pp.4809-4819
 https://doi.org/10.1029/2018GL077579
