@@ -1,3 +1,3 @@
-import tools
-import process_data
-import simulation
+from .tools import *
+from .process_data import ReadData
+from .simulation import Simulation
