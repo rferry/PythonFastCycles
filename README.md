@@ -28,11 +28,11 @@ a = 0.0075
 b = 0.01
 ```
 
-The lenght of the fault $L$ is defined with the ratio $L / L{nuc}$. $L_{nuc}$ is computed automatically.    
+The lenght of the fault $`L`$ is defined with the ratio $`L / L{nuc}$. $L_{nuc}`$ is computed automatically.    
 
 `L_over_Lnuc = 2`
 
-Defines $\dot \sigma$
+Defines $`\dot \sigma`$
 
 ```
 s11 = 0.00e+00
