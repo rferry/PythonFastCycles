@@ -5,7 +5,7 @@ This is a Python package to interact with the the Fortran code *FastCycles*.
 
 ## Install
 
-You can install the last version of *PythonFastCycles* using pip.    
+You can install the lastest version of *PythonFastCycles* using pip.    
 Run in a terminal:         
 `pip install PythonFastCycles`
 
@@ -32,7 +32,7 @@ The lenght of the fault L is defined with the ratio L/L<sub>nuc</sub> (L<sub>nuc
 
 `L_over_Lnuc = 2`
 
-Defines \\sigma 
+Defines &sigma;
 
 ```python
 s11 = 0.00e+00
@@ -44,6 +44,26 @@ s23 = 0.1
 
 sigma_dot = np.array([[s11, s12, s13], [s12, s22, s23], [s13, s23, s33]])
 ```
+
+#### Create a simulation 'test'
+
+First initialise the simulation 
+
+```python
+test = Simulation(path, 'Test', mu, a, b, fric_law=fric_law, frac_mode=frac_mode, sigma_N=sigma_N, Dc=Dc)
+```
+
+You can thus create all files (*i.e.* config.in, geometry.in, GPS.in and tides.in) using :   
+
+```python
+test.create_all_files(L_over_Lnuc, sigma_dot, geom_type='1fault')
+```
+Parameters that can be parse to this function:
+*   *geom_type* specifies the geometry of your fault system. For now you can only choose from:
+  - "1fault", a geometry with a single fault of length L defines with L/L<sub>nuc</sub>
+  - "2faults_overlapping", the geometry of Romanet et al. (2018), *GRL*. You can then specify:
+      + D/L<sub>nuc</sub> with D_over_Lnuc
+      + the overlap (L/(2L<sub>nuc</sub> in the figure below) the parameter overlap
 
 ## References
 <a id="1">[1]</a> 
