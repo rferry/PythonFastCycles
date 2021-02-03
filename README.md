@@ -28,11 +28,11 @@ a = 0.0075
 b = 0.01
 ```
 
-The lenght of the fault $`L`$ is defined with the ratio $`L / L{nuc}$. $L_{nuc}`$ is computed automatically.    
-<pre xml:lang="latex">L / L{nuc}$. $L_{nuc}</pre>
+The lenght of the fault L is defined with the ratio L/L<sub>nuc</sub> (L<sub>nuc</sub> is computed automatically).      
+
 `L_over_Lnuc = 2`
 
-Defines $`\dot \sigma`$
+Defines \sigma
 
 ```
 s11 = 0.00e+00
