@@ -17,7 +17,7 @@ Run in a terminal:
 `path = 'path/to/fastcycles/problems/' `
 
 #### Defines parameters
-```
+```python
 fric_law = 'RateStateAgeing_R'
 frac_mode = 'ModeIII'
 
@@ -34,7 +34,7 @@ The lenght of the fault L is defined with the ratio L/L<sub>nuc</sub> (L<sub>nuc
 
 Defines \\sigma 
 
-```
+```python
 s11 = 0.00e+00
 s22 = 0.00e+00
 s33 = 0.00e+00
