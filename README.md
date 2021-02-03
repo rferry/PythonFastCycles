@@ -32,7 +32,7 @@ The lenght of the fault L is defined with the ratio L/L<sub>nuc</sub> (L<sub>nuc
 
 `L_over_Lnuc = 2`
 
-Defines \sigma
+Defines \[\sigma \]
 
 ```
 s11 = 0.00e+00
