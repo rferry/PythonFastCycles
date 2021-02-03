@@ -64,6 +64,9 @@ class ReadData:
         # Compute max_vel
         self.compute_max_vel()
         
+        # Read EQ catalog
+        self.read_EQcatalog()
+        
         # Compute L and Lnuc
         self.L = []
         self.Lnuc = []
@@ -917,7 +920,8 @@ class ReadData:
         
         # Save if savefig=True
         if savefig:
-            fig.savefig(self.path + 'GPS_rate_evolution.png', dpi=400)
+            fig.savefig(self.path + 'GPS_rate_evolution.png', dpi=400, \
+                        bbox_inches='tight')
             
     def plot_GPS_disp(self, start=0, stop=None, plot_type='all', savefig=True):
         """
@@ -1007,7 +1011,10 @@ class ReadData:
             ax.vlines(tEQ, ymin, ymax, colors=colors, linestyle='--')
         
         # x axis label
-        axs[len(self.GPSrate)-1, 0].set_xlabel('Time (year)', fontsize=12)
+        try:  # if "eaach"
+            axs[len(self.GPSrate)-1, 0].set_xlabel('Time (year)', fontsize=12)
+        except:  # if "all"
+            axs[0, 0].set_xlabel('Time (year)', fontsize=12)  
         
         # Add common ylabel
         fig.text(0.01, 0.5, 'Displacement $(m)$', va='center', \
@@ -1019,4 +1026,5 @@ class ReadData:
             
         # Save if savefig=True
         if savefig:
-            fig.savefig(self.path + 'GPS_displacements.png', dpi=400)
+            fig.savefig(self.path + 'GPS_displacements.png', dpi=400, \
+                        bbox_inches='tight')
