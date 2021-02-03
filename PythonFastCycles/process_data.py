@@ -602,7 +602,7 @@ class ReadData:
         
         # Set y ticks at every power of 10
         axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, \
-                                                         numticks=6))
+                                                         numticks=5))
         
         ##################
         # Plot slip rate #
