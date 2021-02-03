@@ -8,7 +8,9 @@ This is a Python package to interact with the the Fortran code *FastCycles*.
 You can install the last version of *PythonFastCycles* using pip. Run in a terminal:         
 `pip install PythonFastCycles`
 
-## Usage 
+## How to use
+
+### Create file for a simulation 
 
 ## References
 <a id="1">[1]</a> 
