@@ -5,6 +5,9 @@ This is a Python package to interact with the the Fortran code *FastCycles*.
 
 ## Install
 
+You can install the last version of *PythonFastCycles* using pip. Run in a terminal:
+`pip install PythonFastCycles`
+
 ## Usage 
 
 ## References
