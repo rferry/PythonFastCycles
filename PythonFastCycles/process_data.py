@@ -833,7 +833,8 @@ class ReadData:
         ax.tick_params(axis='both', which='major', labelsize=10)    
         
         if savefig:
-            fig.savefig(self.path + 'geometry.png', dpi=400)
+            fig.savefig(self.path + 'geometry.png', dpi=400, \
+                        bbox_inches='tight')
             
     def plot_GPS_rate(self, start=0, stop=None, savefig=True):
         """
