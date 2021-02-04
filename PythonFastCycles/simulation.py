@@ -60,7 +60,7 @@ class Simulation:
 
     def create_all_files(self, L_over_Lnuc, sigma_dot, geom_type, \
                          D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], \
-                         Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0], \
+                         Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], \
                          Vval_x1='default', Vval_x2='default', \
                          Vval_pourc=0.001, stop_crit=1, max_it=10000, \
                          final_time=10000000, nf=False):
@@ -199,7 +199,7 @@ class Simulation:
 
         return
 
-    def create_tides_file(self, Tampli=[0.0], Tperiod=[0.0], Tphase=[0.0]):
+    def create_tides_file(self, Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0]):
         """
         Create "tides.in" file in the simulation directory. Default is no 
         tides.
