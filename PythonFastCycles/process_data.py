@@ -265,6 +265,7 @@ class ReadData:
         a = []
         b = []
         Dc = []
+        V0 = []
         sigmaN = []
         ds = []
         sigma_dot = np.zeros((3, 3)) # sigma_dot components will be zero unless
@@ -278,6 +279,8 @@ class ReadData:
                 b.append(float((line.split()[2]).split(',')[2])) 
             elif line.startswith('Dc_val'):
                 Dc.append(float((line.split()[2]).split(',')[2])) 
+            elif line.startswith('V0_val'):
+                V0.append(float((line.split()[2]).split(',')[2])) 
             elif line.startswith('sigmaN_val'):
                 sigmaN.append(float((line.split()[2]).split(',')[2]))
             elif line.startswith('ds'):
@@ -309,6 +312,7 @@ class ReadData:
         self.a = a
         self.b = b
         self.Dc = Dc
+        self.V0 = V0
         self.sigmaN = sigmaN
         self.ds = ds
         self.sigma_dot = sigma_dot 
@@ -463,7 +467,36 @@ class ReadData:
 
     def compute_EQcatalog(self, eql=1e-3, ssel=1e-8):
         # TODO !
-        pass        
+        pass  
+    
+     def compute_tractionT(self, f0=0.6):
+        """
+        Compute shear traction on the faults.
+        tau = tractionN * [f0 + aln(V/V0) + bln((theta*V0)/Dc)]
+
+        Parameters
+        ----------
+        f0 : float, optional
+            Steady-state friction at V=V0. The default is 0.6.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Initiaisation
+        tractionT = []
+        
+        # Loop over fault
+        for i in range(self.nbr_fault):
+            # f = f0 + aln(V/V0) + bln((theta*V0)/Dc)
+            f = f0 + self.a[i] * np.log(self.velocity[i]/self.V0[i]) + \
+                self.b * np.log((self.theta[i] * self.V0[i]) / self.Dc[i])
+            # tau = sigma_N * f    
+            tractionT.append(self.tractionN[i] * f)
+        
+        # Store data 
+        self.tractionT = tractionT   
     
     def plot_max_vel(self, eql=1e-3, ssel=1e-8, start=0, stop=None, \
                      savefig=True):
