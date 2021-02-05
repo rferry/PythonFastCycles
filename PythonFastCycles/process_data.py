@@ -67,13 +67,17 @@ class ReadData:
         # Read EQ catalog
         self.read_EQcatalog()
         
-        # Compute L and Lnuc
+        # Compute L, Lnuc and Lb
         self.L = []
         self.Lnuc = []
+        self.Lb = []
         for i in range(self.nbr_fault):
             self.L.append(self.elements[i] * self.ds[i])
             self.Lnuc.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
                                                     (self.b[i] - self.a[i])))
+            self.Lb.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
+                                                      self.b[i]))
+            
 
     def read_binary_file(self, file_type):
         """
@@ -469,7 +473,7 @@ class ReadData:
         # TODO !
         pass  
     
-     def compute_tractionT(self, f0=0.6):
+    def compute_tractionT(self, f0=0.6):
         """
         Compute shear traction on the faults.
         tau = tractionN * [f0 + aln(V/V0) + bln((theta*V0)/Dc)]
