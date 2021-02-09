@@ -1,0 +1,79 @@
+&main
+simulation_name = 'DataTest'
+/
+&friction
+fric_law = 'RateStateAgeing_R'
+/
+&material_and_loading
+mu = 30000000000.0 
+cp = 5.00e+03 
+cs = 3.50e+03 
+sigma11_dot_inf = 0.0 
+sigma22_dot_inf = 0.0 
+sigma12_dot_inf = 0.0 
+sigma31_dot_inf = 0.0 
+sigma32_dot_inf = 1.0
+/
+&fault_friction
+a_distr = 'CST'
+a_val = -1.000e+00,-1.000e+00,0.0075,0.0075
+b_distr = 'CST'
+b_val = -1,-1,0.01,0.01
+Dc_distr = 'CST'
+Dc_val = -1,-1,0.001,0.001
+V0_distr = 'CST'
+V0_val = -1.000e+00,-1.000e+00,1e-09,1e-09
+/
+&fault_friction
+a_distr = 'CST'
+a_val = -1.000e+00,-1.000e+00,0.0075,0.0075
+b_distr = 'CST'
+b_val = -1,-1,0.01,0.01
+Dc_distr = 'CST'
+Dc_val = -1,-1,0.001,0.001
+V0_distr = 'CST'
+V0_val = -1.000e+00,-1.000e+00,1e-09,1e-09
+/
+&fault_initial_condition
+slip_distr = 'CST'
+slip_val = -1.000e+00,-1.000e+00,0,0
+V_distr = 'CST'
+V_val = 10,30,1e-09,1.001e-09
+theta_distr = 'CST'
+theta_val = -1.000e+00,-1.000e+00,1000000.0,1000000.0
+sigmaN_distr = 'CST'
+sigmaN_val = -1,-1,-100000000.0,-100000000.0
+ds = 3.0
+/
+&fault_initial_condition
+slip_distr = 'CST'
+slip_val = -1.000e+00,-1.000e+00,0,0
+V_distr = 'CST'
+V_val = -1.000e+00,-1.000e+00,1e-09,1e-09
+theta_distr = 'CST'
+theta_val = -1.000e+00,-1.000e+00,1000000.0,1000000.0
+sigmaN_distr = 'CST'
+sigmaN_val = -1,-1,-100000000.0,-100000000.0
+ds = 3.0
+/
+&simulation_parameter
+fracture_mode = 'modeIII'
+static_kernel = 'hmatrix'
+initial_time = 0.000e+00 
+time_step_max = 10
+final_time = 10000000
+stop_criteria = 1
+cut_vel = 1.000e-08 
+max_it = 10000
+tol_solver = 1.000e-10 
+tol_interp = 1.000e-08 
+iprec = 4
+icheck_interp = 0
+omp_threads = 4
+/
+&output
+stride_time = 5
+GPS_stride = 1
+isave_node = 1
+freq_writing_file = 1000
+/
