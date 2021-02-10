@@ -503,7 +503,7 @@ class ReadData:
         self.tractionT = tractionT   
     
     def plot_max_vel(self, eql=1e-3, ssel=1e-8, start=0, stop=None, \
-                     savefig=True):
+                     plot_type='each', savefig=True):
         """
         Plot mamimum slip for all faults.
 
@@ -518,6 +518,14 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        plot_type : string, optional
+             Type of plot. Can be:
+                * 'each': a subplot for each fault
+                * 'all': all faults on the same plot
+            The default is 'each'.           
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "slip_rate_evolution.png". The default is True.
 
         Returns
         -------
@@ -542,54 +550,71 @@ class ReadData:
         # Time
         time = self.time[start:stop] / (3600*24*362.25)
 
-        # Create figure
-        fig, axs = plt.subplots(self.nbr_fault, 1, squeeze=False)
+        # Create figure        
+        if plot_type=='each':
+            fig, axs = plt.subplots(self.nbr_fault, 1, squeeze=False)
+        elif plot_type=='all':
+            fig, axs = plt.subplots(1, 1, squeeze=False)
 
         for i in range(self.nbr_fault):
-            # Plot data
-            axs[i, 0].plot(time, self.max_vel[i][start:stop], color='red')
-
-            # Set ylim
-            axs[i, 0].set_ylim(minv, maxv*10)
-
-            # Fill between line and O
-            axs[i, 0].fill_between(
-                time, 0, self.max_vel[i][start:stop], color='lightgrey')
-
-            # Set tick label size
-            axs[i, 0].yaxis.set_tick_params(labelsize=9)
-            axs[i, 0].xaxis.set_tick_params(labelsize=9)
-
-            # Create grid
-            axs[i, 0].grid()
-
+            if plot_type=='each':
+                # Plot data
+                axs[i, 0].plot(time, self.max_vel[i][start:stop], color='red')
+    
+                # Fill between line and O
+                axs[i, 0].fill_between(
+                    time, 0, self.max_vel[i][start:stop], color='lightgrey')
+    
+                # Write subplot title if there is more than one fault
+                if self.nbr_fault > 1 :
+                    axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+                    axs[i, 0].yaxis.set_label_position("right")
+                
+            elif plot_type=='all':
+                axs[0, 0].plot(time, self.max_vel[i][start:stop], \
+                               label='Fault {}'.format(i+1)) 
+                    
+        for ax in fig.axes:
             # Put y axis in log
-            axs[i, 0].set_yscale('log')
-
+            ax.set_yscale('log')
+            
+            # Set ylim
+            ax.set_ylim(minv, maxv*10)
+            
             # Avoid white space between start and en of axis
-            axs[i, 0].margins(x=0)
-
-            # Write subplot title if there is more than one fault
-            if self.nbr_fault > 1 :
-                axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
-                axs[i, 0].yaxis.set_label_position("right")
-
+            ax.margins(x=0)
+            
+            # Create grid
+            ax.grid()
+            
+            # Set tick label size
+            ax.yaxis.set_tick_params(labelsize=9)
+            ax.xaxis.set_tick_params(labelsize=9)
+            
             # Draw SSE and EQ horizontal lines
-            axs[i, 0].axhline(ssel, color='lightgreen',
-                              linestyle='--', dashes=(4, 4))
-            axs[i, 0].axhline(eql, color='paleturquoise',
-                              linestyle='--', dashes=(4, 4))
-
+            ymin, ymax = ax.get_ylim()
+            ax.axhline(ssel, ymin, ymax, color='lightgreen', \
+                     linestyle='--', dashes=(4, 4))
+            ax.axhline(eql, ymin, ymax, color='paleturquoise', \
+                     linestyle='--', dashes=(4, 4))
+        
         # x axis label
-        axs[self.nbr_fault - 1, 0].set_xlabel('Time (year)', fontsize=12)
-
+        try:  # if "each"
+            axs[self.nbr_fault - 1, 0].set_xlabel('Time (year)', fontsize=12)
+        except:  # if "all"
+            axs[0, 0].set_xlabel('Time (year)', fontsize=12)      
+        
         # Add common ylabel
         fig.text(0.01, 0.5, 'Maximum slip rate ($m.s^{-1}$)',
                  va='center', rotation='vertical', fontsize=12)
         
+        # Plot legend if there is a single plot
+        if plot_type=="all":
+            fig.legend(loc='upper left')
+        
         # Save if savefig=True
         if savefig:
-            fig.savefig(self.path + 'max_vel_evolution.png', dpi=400)
+            fig.savefig(self.path + 'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, savefig=True):  
         """
@@ -1048,7 +1073,7 @@ class ReadData:
             ax.vlines(tEQ, ymin, ymax, colors=colors, linestyle='--')
         
         # x axis label
-        try:  # if "eaach"
+        try:  # if "each"
             axs[len(self.GPSrate)-1, 0].set_xlabel('Time (year)', fontsize=12)
         except:  # if "all"
             axs[0, 0].set_xlabel('Time (year)', fontsize=12)  
