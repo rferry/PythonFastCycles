@@ -65,7 +65,7 @@ class ReadData:
         self.compute_max_vel()
         
         # Read EQ catalog
-        self.read_EQcatalog()
+        # self.read_EQcatalog()
         
         # Compute L, Lnuc and Lb
         self.L = []
@@ -105,6 +105,12 @@ class ReadData:
 
         # Sorts selected files in ascending order
         files.sort()
+        
+        # Dealing with '*******' files
+        if files[0] == file_type + '*******':
+            # Move the first element to the last position 
+            files.append(files[0])
+            del files [0]
 
         data = []  # list to store the data
         data_temp = []  # list to the store temporary data for velocity
@@ -546,7 +552,7 @@ class ReadData:
                 maxv = maxt
             else:
                 pass
-
+        
         # Time
         time = self.time[start:stop] / (3600*24*362.25)
 
@@ -579,7 +585,7 @@ class ReadData:
             ax.set_yscale('log')
             
             # Set ylim
-            ax.set_ylim(minv, maxv*10)
+            ax.set_ylim(minv, maxv + 0.1*(maxv-minv))
             
             # Avoid white space between start and en of axis
             ax.margins(x=0)
@@ -592,10 +598,10 @@ class ReadData:
             ax.xaxis.set_tick_params(labelsize=9)
             
             # Draw SSE and EQ horizontal lines
-            ymin, ymax = ax.get_ylim()
-            ax.axhline(ssel, ymin, ymax, color='lightgreen', \
+            xmin, xmax = ax.get_xlim()
+            ax.axhline(ssel, xmin, xmax, color='lightgreen', \
                      linestyle='--', dashes=(4, 4))
-            ax.axhline(eql, ymin, ymax, color='paleturquoise', \
+            ax.axhline(eql, xmin, xmax, color='paleturquoise', \
                      linestyle='--', dashes=(4, 4))
         
         # x axis label
@@ -883,7 +889,7 @@ class ReadData:
                                    ec='none', pad=1), ha='center', va='center')
             
         # Set axis limits and aspect 
-        ax.set_ylim(mini - Ly*3, maxi + Ly*3)
+        ax.set_ylim(mini - Ly*0.1, maxi + Ly*0.1)
         ax.set_aspect('equal')
         
         # Axis labels
@@ -954,8 +960,8 @@ class ReadData:
             axs[i, 0].fill_between(
                 time, 0, self.GPSrate[i][start:stop], color='lightgrey')
 
-            # Write subplot title for each fault
-            axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
+            # Write subplot title for each station
+            axs[i, 0].set_ylabel('Station {}'.format(i+1), fontsize=11)
             axs[i, 0].yaxis.set_label_position("right") 
                 
         
