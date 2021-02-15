@@ -4,6 +4,8 @@ Class to create all files for a simulation.
 First version by R. Ferry on January 2021.
 """
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 
 class Simulation:
     def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R',\
@@ -63,7 +65,7 @@ class Simulation:
                          Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], \
                          Vval_x1='default', Vval_x2='default', \
                          Vval_pourc=0.001, stop_crit=1, max_it=10000, \
-                         final_time=10000000, nf=False):
+                         final_time=10000000, tol_solver=1.00e-8, nf=False):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -163,7 +165,7 @@ class Simulation:
             raise Exception('geom_type does not exist.')
 
         self.create_config_file(sigma_dot, Vval_x1, Vval_x2, Vval_pourc, \
-                                stop_crit, max_it, final_time, nf)
+                                stop_crit, max_it, final_time, tol_solver, nf)
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
@@ -245,7 +247,7 @@ class Simulation:
 
     def create_config_file(self,sigma_dot,Vval_x1='default',Vval_x2='default',\
                            Vval_pourc=0.001, stop_crit=1, max_it=10000, \
-                           final_time=10000000, nf=False):
+                           final_time=10000000, tol_solver=1.00e-8, nf=False):
         """
         Create "config.in" file in the simulation directory.
 
@@ -419,7 +421,7 @@ class Simulation:
                     'stop_criteria = {}\n'.format(self.stop_crit),
                     'cut_vel = 1.000e-08 \n',
                     'max_it = {} \n'.format(self.max_it),
-                    'tol_solver = 1.000e-08 \n',
+                    'tol_solver = {} \n'.format(tol_solver),
                     'tol_interp = 1.000e-08 \n',
                     'iprec = 4\n',
                     'icheck_interp = 0\n',
@@ -532,4 +534,189 @@ class Simulation:
             for line in content:
                 file.write(line)
 
+        return
+
+    def create_geom_multiple_faults(self, lengths, angles, xs, ys, show=False):
+        """
+        Create geometry.in file for a multiple faults geometry.
+        
+              /
+             /        
+            /
+           /
+          + <-- Point defining the fault (given as x and y distances from the 
+                origin). Here the angle is positive and is ~60°.
+                 
+        
+        Faults are defined with a length, an angle and the distance in x (xs) 
+        and y (ys) of one point from the first fault. 
+        Hence len(lengths) = len(angles) = n and len(xs) = len(ys) = n-1, n is 
+        the number of faults.
+        Length, x and y distances are normalised by Lnuc.
+        The angle is positive in the trigonometric direction. 
+        The point defining the first fault is (0, 0).
+
+        Parameters
+        ----------
+        lengths : list of float
+            Lengths of the faults normalised by Lnuc (L/Lnuc).
+        angles : list of float
+            Angles of the faults.
+        xs : list of float
+            Distance in x normalised by Lnuc of the points defining the faults 
+            and the origin.
+        ys : list of float
+            Distance in y normalised by Lnuc of the points defining the faults 
+            and the origin.
+        show : bool, optional
+            If True, plot the fault system geometry. The default is False.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Preliminary checks
+        if len(lengths) != len(angles):
+            raise Exception('lengths and angles must have the same size !')
+        if len(xs) != len(ys):
+            raise Exception('xs and ys must have the same size !')
+        if len(xs) != len(lengths) - 1:
+            raise Exception('xs and ys must have one element less than \
+                            lengths and angles')            
+                
+        # Initialisation
+        xs = [0] + xs
+        ys = [0] + ys
+        
+        # Compute the second edges of the faults 
+        x2 = (xs + np.cos(np.deg2rad(angles)) * lengths) * self.Lnuc
+        y2 = (ys + np.sin(np.deg2rad(angles)) * lengths) * self.Lnuc
+        
+        # Assemble first edges (xs and ys) with second edges
+        X = [None] * 2 * len(xs)  # Initialisation
+        Y = [None] * 2 * len(ys)  # Initialisation
+        X[::2] = [el * self.Lnuc for el in xs]
+        X[1::2] = [el for el in x2]
+        
+        Y[::2] = [el * self.Lnuc for el in ys]
+        Y[1::2] = [el for el in y2]
+        
+        # Create the content of the file
+        content = []
+        for i, el in enumerate(X[::2]):
+            content += ['{} {} \n'.format(el, Y[i*2]),
+                        '{} {} \n'.format(X[(i*2)+1], Y[(i*2)+1]),
+                        '/\n']
+        
+        # Write geometry.in
+        with open(self.path + 'geometry.in', 'w') as file:
+            for line in content:
+                file.write(line)
+        
+        # Plot the geometry
+        if show:
+            self.plot_geometry()
+
+        return
+
+    def plot_geometry(self, scale='Lnuc', savefig=True):
+        """
+        Plot the fault system geometry from geometry.in.
+
+        Parameters
+        ----------
+        scale : str, optional
+            Scale of axis. Can be 'Lnuc' (normalised by Lnuc) or 'X'. The 
+            default is 'Lnuc'.
+        savefig : bool, optional
+            If savefig is True, save the figure in the simulation directory 
+            under the name "slip_rate_evolution.png". The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        # TODO ! Add GPS station plot
+        # Read geometry.im
+        with open(self.path + 'geometry.in', 'r') as file:
+            content = file.readlines()
+            
+        # Extract nbr_fault, x amd y coordinates
+        # Initialisation
+        nbr_fault = 0
+        x = []
+        y = []
+        for line in content:
+            if line == '/\n':
+                nbr_fault += 1
+            else:
+                x_temp, y_temp = line.split()
+                x.append(float(x_temp))
+                y.append(float(y_temp))
+        # Store results        
+        self.nbr_fault = nbr_fault
+        self.x = x
+        self.y = y
+        
+        # Compute figure limits 
+        ymaxi = np.max(self.y)
+        ymini = np.min(self.y)
+        xmaxi = np.max(self.x)
+        xmini = np.min(self.x)
+        if scale == 'Lnuc':        
+            ymini = ymini / self.Lnuc
+            ymaxi = ymaxi / self.Lnuc
+            xmini = xmini / self.Lnuc
+            xmaxi = xmaxi / self.Lnuc
+        Ly = ymaxi-ymini # extend in y direction of the fault system
+        Lx = xmaxi-xmini # extend in x direction of the fault system
+
+        # Initialise figure
+        fig, ax = plt.subplots(1, 1)
+        
+        # Plot each fault 
+        for i in range(nbr_fault):
+            if scale== 'Lnuc':
+                x = [el/self.Lnuc for el in self.x[i*2:i*2+2]]
+                y = [el/self.Lnuc for el in self.y[i*2:i*2+2]]
+            else:
+                x = self.x[i*2:i*2+2]
+                y = self.y[i*2:i*2+2]
+            
+            ax.plot(x, y, 'b')
+        
+            # Add fault "label"
+            xtext = 0.5 *(np.max(x) + np.min(x))
+            ytext = 0.5 *(np.max(y) + np.min(y))
+            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', \
+                                ec='none', pad=1), ha='center', va='center')
+            
+            # # Set axis limits and aspect 
+            if ymaxi == ymini :  # If all faults are aligned horizontally
+                ax.set_ylim(ymini -Lx*0.1, ymaxi + Lx*0.1)  
+            elif xmaxi == xmaxi :  # If all faults are aligned vertically 
+                ax.set_xlim(xmini -Ly*0.1, xmaxi + Ly*0.1) 
+            else:
+                ax.set_ylim(ymini - Ly*0.1, ymaxi + Ly*0.1)
+            ax.set_aspect('equal')
+            
+            # Axis labels
+            if scale == 'Lnuc':
+                ax.set_xlabel('$X/L_{nuc}$', fontsize=12)
+                ax.set_ylabel('$Y/L_{nuc}$', fontsize=12)
+            else:
+                ax.set_xlabel('$X$', fontsize=12)
+                ax.set_ylabel('$Y$', fontsize=12)
+            
+            # Change tick size    
+            ax.tick_params(axis='both', which='major', labelsize=10)    
+        
+        fig.tight_layout()
+        
+        if savefig:
+            fig.savefig(self.path + 'geometry_in.png', dpi=400, \
+                        bbox_inches='tight')
+    
         return
