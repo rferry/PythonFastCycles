@@ -65,7 +65,7 @@ class ReadData:
         self.compute_max_vel()
         
         # Read EQ catalog
-        # self.read_EQcatalog()
+        self.read_EQcatalog()
         
         # Compute L, Lnuc and Lb
         self.L = []
