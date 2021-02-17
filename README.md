@@ -61,14 +61,19 @@ test.create_all_files(L_over_Lnuc, sigma_dot, geom_type='1fault')
 ```
 Parameters that can be parse to this function:
 *   *geom_type* specifies the geometry of your fault system. For now you can only choose from:
-  - "1fault", a geometry with a single fault of length L defines with L/L<sub>nuc</sub>
-  - "2faults_overlapping", the geometry of Romanet et al. (2018), *GRL*. You can then specify:
-      + D/L<sub>nuc</sub> with D_over_Lnuc
-      + the overlap (L/(2L<sub>nuc</sub> in the figure below) the parameter overlap
+    - "1fault", a geometry with a single fault of length L defines with L/L<sub>nuc</sub>
+    - "2faults_overlapping", the geometry of Romanet et al. (2018), *GRL*. You can then specify:
+        + D/L<sub>nuc</sub> with D_over_Lnuc
+        + the overlap (L/(2L<sub>nuc</sub> in the figure below) the parameter overlap
 
-<p align="center">
-  <img src="./img/geometry_Romanet2018GRL.png" width="500">
-</p>
+      <p align="center">
+        <img src="./img/geometry_Romanet2018GRL.png" width="500">
+      </p>
+    - "multiple", a geometry with multiple faults defined with a length, an angle and the distance in x and y of one edge from the first fault
+         + * lengths * is a vector with the lengths of the faults normalised by Lnuc (L/L<sub>nuc</sub>). It has size *n*, with *n* the number of fault.
+         + * angles * is a vector with the orientation of the faults. The angle is positive in the trigonometric direction. It has size *n*.
+         + *xs* is the distance in x normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
+         + *ys* is the distance in y normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
 
 *   *stop_crit* can be 0, 1 or 2.
   - *stop_crit* = 0: simulation will stop after the first event
