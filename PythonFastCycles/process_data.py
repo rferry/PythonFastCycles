@@ -603,6 +603,10 @@ class ReadData:
                      linestyle='--', dashes=(4, 4))
             ax.axhline(eql, xmin, xmax, color='paleturquoise', \
                      linestyle='--', dashes=(4, 4))
+            
+            # Plot legend if there is a single plot
+            if plot_type=="all":    
+                ax.legend(loc='upper left')
         
         # x axis label
         try:  # if "each"
@@ -614,13 +618,10 @@ class ReadData:
         fig.text(0.01, 0.5, 'Maximum slip rate ($m.s^{-1}$)',
                  va='center', rotation='vertical', fontsize=12)
         
-        # Plot legend if there is a single plot
-        if plot_type=="all":
-            fig.legend(loc='upper left')
-        
         # Save if savefig=True
         if savefig:
-            fig.savefig(self.path + 'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
+            fig.savefig(self.path + 
+                        'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, savefig=True):  
         """
@@ -647,7 +648,7 @@ class ReadData:
         # Time in year
         time = self.time[start:stop]/(365.25*24*3600)
         
-        # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]})
+        # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]}
         fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=True)
         
         ################
@@ -656,7 +657,7 @@ class ReadData:
         
         # Loop over all the fault 
         for i in range(self.nbr_fault):
-            axs[0].plot(self.max_vel[i][start:stop], time, \
+            axs[0].plot(self.max_vel[i][start:stop], time, 
                         label='Fault {}'.format(i+1))
             
         # Put y axis in log
@@ -672,7 +673,7 @@ class ReadData:
         axs[0].set_ylabel('Time (year)', fontsize=12)
         
         # Set y ticks at every power of 10
-        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, \
+        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, 
                                                          numticks=5))
         
         ##################
@@ -681,7 +682,7 @@ class ReadData:
         
         for i in range(self.nbr_fault):
             # Mask (will display in white) velocity values < vmask
-            velm = np.ma.masked_where(self.velocity[i] < vmask, \
+            velm = np.ma.masked_where(self.velocity[i] < vmask, 
                                       self.velocity[i])
             
             # Set the grid
@@ -691,8 +692,8 @@ class ReadData:
             cmp = nice_colormap()
             
             # Plot
-            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], \
-                                     norm=colors.LogNorm(vmin=1e-12, vmax=1), \
+            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], 
+                                     norm=colors.LogNorm(vmin=1e-12, vmax=1), 
                                          shading='nearest', cmap=cmp)
        
             # Remove frame            
@@ -873,7 +874,7 @@ class ReadData:
         
         # Plot each fault 
         for i in range(self.nbr_fault):
-            if scale== 'Lnuc':
+            if scale == 'Lnuc':
                 x = [el/self.Lnuc[0] for el in self.ex[i]]
                 y = [el/self.Lnuc[0] for el in self.ey[i]]
             else:
@@ -885,7 +886,7 @@ class ReadData:
             # Add fault "label"
             xtext = 0.5 *(np.max(x) + np.min(x))
             ytext = 0.5 *(np.max(y) + np.min(y))
-            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', \
+            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', 
                                    ec='none', pad=1), ha='center', va='center')
             
         # Set axis limits and aspect 
@@ -904,7 +905,7 @@ class ReadData:
         ax.tick_params(axis='both', which='major', labelsize=10)    
         
         if savefig:
-            fig.savefig(self.path + 'geometry.png', dpi=400, \
+            fig.savefig(self.path + 'geometry_out_' + scale + '.png', dpi=400, 
                         bbox_inches='tight')
             
     def plot_GPS_rate(self, start=0, stop=None, savefig=True):
