@@ -82,7 +82,7 @@ Parameters that can be parse to this function:
 
 *   *GPSx* and *GPSy*, two lists with the GPS stations coordinates. By default there is only one GPS station at (10, 10).
 *   *Tampli*, *Tperiod*, *Tphase*, three lists uses to impose tides. By default there is no tides.
-*   *Vval_x1* and Vval_x2*, x coordinates delimiting the portion on the fault on which the initial perturbation is imposed
+*   *Vval_x1* and *Vval_x2*, x coordinates delimiting the portion on the fault on which the initial perturbation is imposed
 *   *Vval_pourc*, the amplitude of the perturbation 
 
 Instead of creating all files at once, you can choose to create just one file.    
