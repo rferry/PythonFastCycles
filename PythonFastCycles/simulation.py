@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Simulation:
-    def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R',\
+    def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R',
                  frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):
         """
         Initialise Simulation class. Compute Lnuc. 
@@ -60,11 +60,12 @@ class Simulation:
         # Compute Lnuc
         self.Lnuc = - (self.mu * self.Dc) / (self.sigma_N * (self.b - self.a))
 
-    def create_all_files(self, L_over_Lnuc, sigma_dot, geom_type, \
-                         D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], \
-                         Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], \
+    def create_all_files(self, sigma_dot, geom_type, L_over_Lnuc=2, show=False,
+                         lengths=None, angles=None, xs=None, ys=None, 
+                         D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], 
+                         Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], 
                          Vval_x1='default', Vval_x2='default', \
-                         Vval_pourc=0.001, stop_crit=1, max_it=10000, \
+                         Vval_pourc=0.001, stop_crit=1, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
@@ -72,8 +73,6 @@ class Simulation:
 
         Parameters
         ----------
-        L_over_Lnuc : real
-            Length of the fault express as the ratio L/Lnuc.
         sigma_dot : array 3*3 of float
             Loading rate symmetrical matrix.
         geom_type : string
@@ -91,6 +90,33 @@ class Simulation:
                     ==========
                     <-------->
                       L/Lnuc
+                * "multiple" for a multiple faults configuration. Faults are 
+                  defined with a length (lengths), an angle (angles) and the 
+                  distance in x (xs) and y (ys) of one point from the first f
+                  ault.
+                  
+                      /
+                     /        
+                    /
+                   /
+                  + <-- Point defining the fault (given as x and y distances 
+                        from the origin). Here the angle is positive and is 
+                        ~60°.
+                 
+        L_over_Lnuc : real
+            Length of the fault express as the ratio L/Lnuc. Default is 2.
+        show : bool
+            If True, plot the geometry. Default is False.
+        lengths : list of float
+            Lengths of the faults normalised by Lnuc (L/Lnuc).
+        angles : list of float
+            Angles of the faults.
+        xs : list of float
+            Distance in x normalised by Lnuc of the points defining the faults 
+            and the origin.
+        ys : list of float
+            Distance in y normalised by Lnuc of the points defining the faults 
+            and the origin.    
         D_over_Lnuc : real
             Distance between the two fault express as the ratio D/Lnuc. Default
             is 0.1.
@@ -134,11 +160,6 @@ class Simulation:
             Number of fault. If not specified, the number of fault will be 
             read in the "geometry.in" file. The default is not specified.
 
-        Raises
-        ------
-        Exception
-            DESCRIPTION.
-
         Returns
         -------
         None.
@@ -157,14 +178,17 @@ class Simulation:
         if geom_type == '1fault':
             x1 = 0
             x2 = self.Lnuc * self.L_over_Lnuc
-            self.create_geom_1fault(x1, x2)
+            self.create_geom_1fault(x1, x2, show=show)
         elif geom_type == '2faults_overlapping':
             self.create_geom_2_faults_overlapping(
-                D_over_Lnuc, L_over_Lnuc, overlap)
+                D_over_Lnuc, L_over_Lnuc, overlap, show=show)
+        elif geom_type == "multiple":
+            self.create_geom_multiple_faults(lengths, angles, xs, ys, 
+                                             show=show)
         else:
             raise Exception('geom_type does not exist.')
 
-        self.create_config_file(sigma_dot, Vval_x1, Vval_x2, Vval_pourc, \
+        self.create_config_file(sigma_dot, Vval_x1, Vval_x2, Vval_pourc, 
                                 stop_crit, max_it, final_time, tol_solver, nf)
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
@@ -245,9 +269,10 @@ class Simulation:
 
         return
 
-    def create_config_file(self,sigma_dot,Vval_x1='default',Vval_x2='default',\
-                           Vval_pourc=0.001, stop_crit=1, max_it=10000, \
-                           final_time=10000000, tol_solver=1.00e-8, nf=False):
+    def create_config_file(self, sigma_dot, Vval_x1='default', 
+                           Vval_x2='default', Vval_pourc=0.001, stop_crit=1, 
+                           max_it=10000, final_time=1e7, tol_solver=1.00e-8, 
+                           nf=False):
         """
         Create "config.in" file in the simulation directory.
 
@@ -441,7 +466,7 @@ class Simulation:
 
         return
 
-    def create_geom_1fault(self, x1, x2):
+    def create_geom_1fault(self, x1, x2, show=False):
         """
         Creates geometry.in file for a simple fault configuration with two 
         points (x1, 0) and (x2, 0).
@@ -474,9 +499,14 @@ class Simulation:
             for line in content:
                 file.write(line)
 
+        # Plot the geometry
+        if show:
+            self.plot_geometry()
+            
         return
 
-    def create_geom_2_faults_overlapping(self, D_over_Lnuc, L_over_Lnuc, overlap):
+    def create_geom_2_faults_overlapping(self, D_over_Lnuc, L_over_Lnuc, 
+                                         overlap, show=False):
         """
         Create geometry.in file for a 2 faults overlapping geometry (as in 
         Romanet et al. (2018), GRL).
@@ -534,6 +564,10 @@ class Simulation:
             for line in content:
                 file.write(line)
 
+        # Plot the geometry
+        if show:
+            self.plot_geometry()
+            
         return
 
     def create_geom_multiple_faults(self, lengths, angles, xs, ys, show=False):
@@ -678,9 +712,9 @@ class Simulation:
         
         # Plot each fault 
         for i in range(nbr_fault):
-            if scale== 'Lnuc':
-                x = [el/self.Lnuc for el in self.x[i*2:i*2+2]]
-                y = [el/self.Lnuc for el in self.y[i*2:i*2+2]]
+            if scale == 'Lnuc':
+                x = [el / self.Lnuc for el in self.x[i*2:i*2+2]]
+                y = [el / self.Lnuc for el in self.y[i*2:i*2+2]]
             else:
                 x = self.x[i*2:i*2+2]
                 y = self.y[i*2:i*2+2]
@@ -688,10 +722,10 @@ class Simulation:
             ax.plot(x, y, 'b')
         
             # Add fault "label"
-            xtext = 0.5 *(np.max(x) + np.min(x))
-            ytext = 0.5 *(np.max(y) + np.min(y))
-            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', \
-                                ec='none', pad=1), ha='center', va='center')
+            xtext = 0.5 * (np.max(x) + np.min(x))
+            ytext = 0.5 * (np.max(y) + np.min(y))
+            ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', 
+                    ec='none', pad=1), ha='center', va='center')
             
             # # Set axis limits and aspect 
             if ymaxi == ymini :  # If all faults are aligned horizontally
