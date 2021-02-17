@@ -36,11 +36,11 @@ The lenght of the fault L is defined with the ratio L/L<sub>nuc</sub> (L<sub>nuc
 Defines &sigma;
 
 ```python
-s11 = 0.00e+00
-s22 = 0.00e+00
-s33 = 0.00e+00
-s12 = 0.00e+00
-s13 = 0.00e+00
+s11 = 0.0
+s22 = 0.0
+s33 = 0.0
+s12 = 0.0
+s13 = 0.0
 s23 = 0.1
 
 sigma_dot = np.array([[s11, s12, s13], [s12, s22, s23], [s13, s23, s33]])
