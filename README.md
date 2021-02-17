@@ -70,8 +70,8 @@ Parameters that can be parse to this function:
         <img src="./img/geometry_Romanet2018GRL.png" width="500">
       </p>
     - "multiple", a geometry with multiple faults defined with a length, an angle and the distance in x and y of one edge from the first fault
-         + * lengths * is a vector with the lengths of the faults normalised by Lnuc (L/L<sub>nuc</sub>). It has size *n*, with *n* the number of fault.
-         + * angles * is a vector with the orientation of the faults. The angle is positive in the trigonometric direction. It has size *n*.
+         + *lengths* is a vector with the lengths of the faults normalised by Lnuc (L/L<sub>nuc</sub>). It has size *n*, with *n* the number of fault.
+         + *angles* is a vector with the orientation of the faults. The angle is positive in the trigonometric direction. It has size *n*.
          + *xs* is the distance in x normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
          + *ys* is the distance in y normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
 
