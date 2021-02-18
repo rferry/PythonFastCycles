@@ -75,6 +75,10 @@ Parameters that can be parse to this function:
          + *xs* is the distance in x normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
          + *ys* is the distance in y normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
 
+      <p align="center">
+        <img src="./img/geometry_multiple.png" width="600">
+      </p>
+      
 *   *stop_crit* can be 0, 1 or 2.
   - *stop_crit* = 0: simulation will stop after the first event
   - *stop_crit* = 1: simulation will stop after *max_it* iterations
