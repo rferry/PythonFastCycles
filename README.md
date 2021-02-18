@@ -105,6 +105,7 @@ test.create_geom_1fault(0, test.Lnuc * test.L_over_Lnuc)
 # Creates config.in file with default values 
 test.create_config_file(sigma_dot)
 ```
+When you create a geometry, you can add the argument `show=True` to the function to plot the geometry. 
 
 ### Reading and processing simulation data 
 
