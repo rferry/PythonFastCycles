@@ -113,7 +113,7 @@ class ReadData:
             del files [0]
 
         data = []  # list to store the data
-        data_temp = []  # list to the store temporary data for velocity
+        data_temp = []  # list to store temporary data for velocity
         # Loops over selected files and read them
         for file in files:
             f = FortranFile(self.path + file, 'r')
