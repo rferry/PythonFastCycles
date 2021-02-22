@@ -24,7 +24,7 @@ class ReadData:
         ----------
         path : string
             Path to simulation directory. 
-
+            
         Returns
         -------
         None.
@@ -620,7 +620,8 @@ class ReadData:
         
         # Save if savefig=True
         if savefig:
-            fig.savefig(self.path + 'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
+            fig.savefig(self.path + 
+                        'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, savefig=True):  
         """
@@ -656,7 +657,7 @@ class ReadData:
         
         # Loop over all the fault 
         for i in range(self.nbr_fault):
-            axs[0].plot(self.max_vel[i][start:stop], time, \
+            axs[0].plot(self.max_vel[i][start:stop], time, 
                         label='Fault {}'.format(i+1))
             
         # Put y axis in log
@@ -672,7 +673,7 @@ class ReadData:
         axs[0].set_ylabel('Time (year)', fontsize=12)
         
         # Set y ticks at every power of 10
-        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, \
+        axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, 
                                                          numticks=5))
         
         ##################
@@ -681,7 +682,7 @@ class ReadData:
         
         for i in range(self.nbr_fault):
             # Mask (will display in white) velocity values < vmask
-            velm = np.ma.masked_where(self.velocity[i] < vmask, \
+            velm = np.ma.masked_where(self.velocity[i] < vmask, 
                                       self.velocity[i])
             
             # Set the grid
@@ -691,8 +692,8 @@ class ReadData:
             cmp = nice_colormap()
             
             # Plot
-            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], \
-                                     norm=colors.LogNorm(vmin=1e-12, vmax=1), \
+            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], 
+                                     norm=colors.LogNorm(vmin=1e-12, vmax=1), 
                                          shading='nearest', cmap=cmp)
        
             # Remove frame            
