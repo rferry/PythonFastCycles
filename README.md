@@ -174,6 +174,26 @@ By default all GPS stations are plot in the save graph. With the argument `plot_
  * For all this functions, to plot data between a and b indices you can specify a `start=a` and/or a `stop=b` argument(s).
  * By default figures are saved in the simulation directory. You can specify `savefig=False` is you don't want to save them.
 
+### Fixing simulations' problems
+
+Sometimes, the maximum slip rate in 'MomentRate.out' is '-Infinity' and the moment rate is 'nan'. It is due to a wrong tolerance criteria for the adaptive time step. For the moment there is no way to know it before running the simulation, and it has to be manually modified afterwards. The tolerance criteria is denoted as *tol_solver* and can be set in 'config.in'.     
+The class FixSimulations check if simulations have '-Infinity' maximum slip rate and can modify the tolerance criteria.     
+All you have to do is:
+```python
+fix = FixSimulations(path, simunames)
+```
+with *path* the path to the simulations directory and *simunames* a list with the names of the simulations to check.   
+For example:
+```python
+simunames= ['simu1', 'simu2', 'simu3']
+```
+You will then be asked if you want to automatically change *tol_solver*. Press *y* to do so and press *y* again to relaunch simulations.   
+*tol_solver* will be decreased by an order of magnitude but it might not be sufficient. You can thus redo the manipulation to decrease it further down.   
+
+If you press *n* you will exit the function but you can still find the simulations that need to be changed using:
+```python
+fix.simu_affected
+```
 ## References
 <a id="1">[1]</a> 
 Romanet et al. (2018). 
