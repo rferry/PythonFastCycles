@@ -36,11 +36,11 @@ The lenght of the fault L is defined with the ratio L/L<sub>nuc</sub> (L<sub>nuc
 Defines &sigma;
 
 ```python
-s11 = 0.00e+00
-s22 = 0.00e+00
-s33 = 0.00e+00
-s12 = 0.00e+00
-s13 = 0.00e+00
+s11 = 0.0
+s22 = 0.0
+s33 = 0.0
+s12 = 0.0
+s13 = 0.0
 s23 = 0.1
 
 sigma_dot = np.array([[s11, s12, s13], [s12, s22, s23], [s13, s23, s33]])
@@ -61,15 +61,24 @@ test.create_all_files(L_over_Lnuc, sigma_dot, geom_type='1fault')
 ```
 Parameters that can be parse to this function:
 *   *geom_type* specifies the geometry of your fault system. For now you can only choose from:
-  - "1fault", a geometry with a single fault of length L defines with L/L<sub>nuc</sub>
-  - "2faults_overlapping", the geometry of Romanet et al. (2018), *GRL*. You can then specify:
-      + D/L<sub>nuc</sub> with D_over_Lnuc
-      + the overlap (L/(2L<sub>nuc</sub> in the figure below) the parameter overlap
+    - "1fault", a geometry with a single fault of length L defines with L/L<sub>nuc</sub>
+    - "2faults_overlapping", the geometry of Romanet et al. (2018), *GRL*. You can then specify:
+        + D/L<sub>nuc</sub> with D_over_Lnuc
+        + the overlap (L/(2L<sub>nuc</sub> in the figure below) the parameter overlap
 
-<p align="center">
-  <img src="./img/geometry_Romanet2018GRL.png" width="500">
-</p>
+      <p align="center">
+        <img src="./img/geometry_Romanet2018GRL.png" width="500">
+      </p>
+    - "multiple", a geometry with multiple faults defined with a length, an angle and the distance in x and y of one edge from the first fault
+         + *lengths* is a vector with the lengths of the faults normalised by Lnuc (L/L<sub>nuc</sub>). It has size *n*, with *n* the number of fault.
+         + *angles* is a vector with the orientation of the faults. The angle is positive in the trigonometric direction. It has size *n*.
+         + *xs* is the distance in x normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
+         + *ys* is the distance in y normalized by L<sub>nuc</sub> between the edge defining the fault and the first fault. Hence it has size n-1.
 
+      <p align="center">
+        <img src="./img/geometry_multiple.png" width="600">
+      </p>
+      
 *   *stop_crit* can be 0, 1 or 2.
   - *stop_crit* = 0: simulation will stop after the first event
   - *stop_crit* = 1: simulation will stop after *max_it* iterations
@@ -77,7 +86,7 @@ Parameters that can be parse to this function:
 
 *   *GPSx* and *GPSy*, two lists with the GPS stations coordinates. By default there is only one GPS station at (10, 10).
 *   *Tampli*, *Tperiod*, *Tphase*, three lists uses to impose tides. By default there is no tides.
-*   *Vval_x1* and Vval_x2*, x coordinates delimiting the portion on the fault on which the initial perturbation is imposed
+*   *Vval_x1* and *Vval_x2*, x coordinates delimiting the portion on the fault on which the initial perturbation is imposed
 *   *Vval_pourc*, the amplitude of the perturbation 
 
 Instead of creating all files at once, you can choose to create just one file.    
@@ -96,6 +105,7 @@ test.create_geom_1fault(0, test.Lnuc * test.L_over_Lnuc)
 # Creates config.in file with default values 
 test.create_config_file(sigma_dot)
 ```
+When you create a geometry, you can add the argument `show=True` to the function to plot the geometry. 
 
 ### Reading and processing simulation data 
 
