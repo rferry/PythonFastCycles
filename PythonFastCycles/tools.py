@@ -55,6 +55,53 @@ def nice_colormap(minv=1e-12, ssel=1e-8, eql=1e-3, maxv=1):
     
     return cmp
 
+def clean_simulations(path, simunames):
+    """
+    Clean simulations' folders by removing extra theta files left from previous
+    runs.
+
+    Parameters
+    ----------
+    path : string
+        Path to the simulations's folder (typically 'problems'). Must have '/'
+        at the end.
+    simunames : list of sting
+        Names of the simulations to clean.
+
+    """
+    for i, simuname in enumerate(simunames):
+        # List all files in simulation directory
+        files_in_dir = os.listdir(path + simuname)
+        
+        # Initialisation
+        theta_files = []
+        time_files = []
+        # Loops over the files and select theta and time files 
+        for file_name in files_in_dir:
+            if 'theta' in file_name:
+                theta_files.append(file_name)
+            elif 'time' in file_name:
+                time_files.append(file_name)
+        
+        # Check if both list are of the same size. If yes, there is no problem
+        if len(theta_files) == len(time_files):
+            pass
+        else:
+            # Get numbers of theta files
+            num_theta = [file[5:] for file in theta_files]
+            # Get numbers of time files
+            num_time = [file[4:] for file in time_files]
+            
+            # Find theta files with no corresponding time files
+            res = [value for value in num_theta if value not in num_time]
+            
+            # Add them to the files to delete 
+            files_to_delete = ['theta' + value for value in res]
+            
+            # Delete the files 
+            for file in files_to_delete:
+                os.remove(path + simuname + '/' + file)
+
 class FixSimulations:
     """
     Class to fix simulations' problems. 
