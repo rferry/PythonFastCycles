@@ -6,6 +6,7 @@ First version by R. Ferry on January 2021.
 import numpy as np
 import sys
 import os
+import re
 from scipy.io import FortranFile
 import matplotlib
 import matplotlib.pyplot as plt
@@ -200,3 +201,62 @@ class FixSimulations:
                 for line in content:
                     file.write(line)
                     
+def find_simunames(path, regex):
+    """
+    Find all simulations in the directory "path" wich names correspond to the 
+    regular expression "regex". 
+    For a guide on regular expressions see:
+    https://docs.python.org/3/howto/regex.html#regex-howto
+
+    Parameters
+    ----------
+    path : string
+        Path to the folder with simulations (called 'problems' most of the 
+        times). Must have '/' at the end.
+    regex : string
+        Expression to search expressed in regex format.
+        Most common expressions are:
+            ^a -> look for "a" at the beginning of the text
+            a$ -> look for a at the end of the text
+            a|b -> look for "a" OR "b"
+            [abc] -> look for "a", "b" or "c"
+                ex: "m[abc]s" will look for "mas", "mbs" or "mcs"
+            [^abc] -> look for everything except "a", "b" and "c"   
+            [a-z] -> look for all lowercase letters from a to z
+            [0-9] -> lookf for all digits
+            . -> look for any caracter 
+            \w -> look for all letters and digits, lower or upper case 
+            \d -> equivqlent to [0-9]
+            {min,max} -> look for n repetitions, n between min and max 
+            {,max} -> look for a maximum number of repetition
+            {min,} -> look for a minimum number of repetition
+            {number} -> look for an exact number of repetition
+                ex: "[0-9]{2,4}" will look for 2 to 4 consecutive digit
+            * -> equivalent to {0,}
+            + -> equivalent to {1,}
+            ? -> equivalent to {,1}
+            \ -> remove the special meaning of a caracter (for example, if you
+                 want to look for a point, use "\.")            
+
+    Returns
+    -------
+    simus : list of string
+        All the simulations matching the expression.
+
+    """
+    # List all files in simulations directory
+    files_in_dir = os.listdir(path)
+    
+    # Initialisation
+    simus = []
+    
+    # Loop over all simulation
+    for simu in files_in_dir:
+        # Check if simulation name match the expression
+        obj = re.match(regex, simu)
+        # if there is a match, save the name of the simulations
+        if obj != None:
+            simus.append(simu)
+            
+    # Return the list of all matching simulations
+    return simus
