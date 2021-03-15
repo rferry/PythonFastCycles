@@ -81,7 +81,7 @@ class ReadData:
             self.L.append(self.elements[i] * self.ds[i])
             self.Lab.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
                                                     (self.b[i] - self.a[i])))
-            self.Linf.append(-(2 * self.mu * self.DC[i]) / 
+            self.Linf.append(-(2 * self.mu * self.Dc[i]) / 
                              (np.pi * self.sigmaN[i] * self.b[i] * 
                               (1 - self.a[i] / self.b[i])**2))
             self.Lb.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
@@ -272,7 +272,7 @@ class ReadData:
                 max_vels_temp[i, j] = line.split()[3+self.nbr_fault+j]
         for i in range(self.nbr_fault):
             Mrate.append(Mrate_temp[:, i])
-            max_vels.append(max_vels_temp[:, i])
+            max_vels.append(list(max_vels_temp[:, i]))
 
         # Stores results
         self.netMrate = netMrate
@@ -566,8 +566,8 @@ class ReadData:
         # Store data 
         self.tractionT = tractionT   
     
-    def plot_max_vel(self, eql=1e-3, ssel=1e-8, start=0, stop=None, \
-                     plot_type='each', savefig=True):
+    def plot_max_vel(self, eql=1e-3, ssel=1e-8, start=0, stop=None, 
+                     vel_tot=False, plot_type='each', savefig=True):
         """
         Plot mamimum slip for all faults.
 
@@ -582,6 +582,10 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        vel_tot : bool, optional
+            If True, will use the max_vel from MomentRate.out for each time 
+            step. If False will use the max_vel computed from velocity data. 
+            The default is False.
         plot_type : string, optional
              Type of plot. Can be:
                 * 'each': a subplot for each fault
@@ -596,12 +600,20 @@ class ReadData:
         None.
 
         """
+        # Set which data to use
+        if vel_tot:
+            max_vel = self.max_vels
+            time = np.array(self.tMrate[start:stop])
+        else:
+            max_vel = self.max_vel
+            time = self.time[start:stop]
+        
         # Determine yaxis lim --> determine min and max velocity
         minv = 1000  # ridiculous value to always be below
         maxv = -9999  # ridiculous value to always be above
         for i in range(self.nbr_fault):
-            mint = np.min(self.max_vel[i][start:stop])
-            maxt = np.max(self.max_vel[i][start:stop])
+            mint = np.min(max_vel[i][start:stop])
+            maxt = np.max(max_vel[i][start:stop])
             if mint < minv:
                 minv = mint
             else:
@@ -611,8 +623,8 @@ class ReadData:
             else:
                 pass
         
-        # Time
-        time = self.time[start:stop] / (3600*24*362.25)
+        # Convert time to years 
+        time = time / (3600*24*362.25)
 
         # Create figure        
         if plot_type=='each':
@@ -623,11 +635,11 @@ class ReadData:
         for i in range(self.nbr_fault):
             if plot_type=='each':
                 # Plot data
-                axs[i, 0].plot(time, self.max_vel[i][start:stop], color='red')
+                axs[i, 0].plot(time, max_vel[i][start:stop], color='red')
     
                 # Fill between line and O
                 axs[i, 0].fill_between(
-                    time, 0, self.max_vel[i][start:stop], color='lightgrey')
+                    time, 0, max_vel[i][start:stop], color='lightgrey')
     
                 # Write subplot title if there is more than one fault
                 if self.nbr_fault > 1 :
@@ -635,7 +647,7 @@ class ReadData:
                     axs[i, 0].yaxis.set_label_position("right")
                 
             elif plot_type=='all':
-                axs[0, 0].plot(time, self.max_vel[i][start:stop], \
+                axs[0, 0].plot(time, max_vel[i][start:stop], \
                                label='Fault {}'.format(i+1)) 
                     
         for ax in fig.axes:
