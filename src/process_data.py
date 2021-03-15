@@ -1171,8 +1171,8 @@ class ReadData:
         fig.text(0.01, 0.5, 'Displacement $(m)$', va='center', \
                  rotation='vertical', fontsize=12)           
 
-        # Plot legend if there is a single plot
-        if plot_type=="all":
+        # Plot legend if there is a single plot AND more than one station
+        if plot_type=="all" and len(self.GPSrate) != 1:
             fig.legend(loc='upper left')
             
         # Save if savefig=True
