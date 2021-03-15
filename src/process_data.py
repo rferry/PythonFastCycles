@@ -693,7 +693,8 @@ class ReadData:
             fig.savefig(self.path + 
                         'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
         
-    def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, savefig=True):  
+    def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, sharey=True, 
+                       savefig=True):  
         """
         Plot slip rate evolution for all faults.
 
@@ -706,6 +707,9 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        sharey : bool, optional
+            If True, time will be linear. If False, time will depends on 
+            timestep. The default is True.
         savefig : bool, optional
             If savefig is True, save the figure in the simulation directory 
             under the name "slip_rate_evolution.png". The default is True.
@@ -719,7 +723,7 @@ class ReadData:
         time = self.time[start:stop]/(365.25*24*3600)
         
         # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]}
-        fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=True)
+        fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=sharey)
         
         ################
         # Plot max_vel #
@@ -746,6 +750,9 @@ class ReadData:
         axs[0].xaxis.set_major_locator(ticker.LogLocator(base=10.0, 
                                                          numticks=5))
         
+        # Remove white at begenning and end of y axis 
+        axs[0].margins(y=0)
+        
         ##################
         # Plot slip rate #
         ##################
@@ -756,7 +763,11 @@ class ReadData:
                                       self.velocity[i])
             
             # Set the grid
-            xx, yy = np.meshgrid(self.ex[i], time)
+            if sharey:
+                y = time
+            else:
+                y = np.arange(len(time))
+            xx, yy = np.meshgrid(self.ex[i], y)
             
             # Create colormap
             cmp = nice_colormap()
