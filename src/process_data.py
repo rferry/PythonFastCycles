@@ -674,8 +674,8 @@ class ReadData:
             ax.axhline(eql, xmin, xmax, color='paleturquoise', \
                      linestyle='--', dashes=(4, 4))
             
-            # Plot legend if there is a single plot
-            if plot_type=="all":    
+            # Plot legend if there is a single plot AND more than one fault
+            if plot_type=="all" and self.nbr_fault>1:    
                 ax.legend(loc='upper left')
         
         # x axis label
