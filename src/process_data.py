@@ -788,6 +788,7 @@ class ReadData:
             nticks = 5 # Number of ticks
             L_over_Lnuc = round(self.L[i] / self.Lnuc[i], 1)
             labels = np.linspace(-L_over_Lnuc/2, L_over_Lnuc/2, nticks)
+            labels = np.round(labels, 2)
             left, right = axs[i+1].get_xlim()
             tick_loc = np.linspace(left, right, nticks)
             axs[i+1].set_xticks(tick_loc)
@@ -814,7 +815,7 @@ class ReadData:
         if savefig:
             fig.savefig(self.path + 'slip_rate_evolution.png', dpi=400)
 
-        return
+        return fig
         
     def plot_moment_rate(self, start=0, stop=None, savefig=True):
         """
