@@ -194,6 +194,16 @@ If you press *n* you will exit the function but you can still find the simulatio
 ```python
 fix.simu_affected
 ```
+
+### Miscellaneous functions
+#### find_simunames
+
+`find_simunames(path, regex)` finds all simulations in the directory `path` matching the expression `regex`. For example:
+```python
+find_simunames(path, '^simu3\d')
+```
+will search all simulations with name starting by 'simu3' and a digit (simu30, simu31, ..., simu39).   
+You can type `help(find_simunames)` to see common regex syntax.
 ## References
 <a id="1">[1]</a> 
 Romanet et al. (2018). 
