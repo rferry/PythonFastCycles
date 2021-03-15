@@ -479,6 +479,42 @@ class ReadData:
         # TODO !
         pass  
     
+    def compute_event_moment(self, depth):
+        # d = np.zeros(len(self.EQgeneral_catalog['Fault']))
+        M0 = np.zeros(len(self.EQgeneral_catalog['Fault']))
+        # Loop over all events
+        for i, fault in enumerate(self.EQgeneral_catalog['Fault']):
+            # Convert string to float 
+            fault = int(fault) - 1
+            # Index of the beginning 
+            beg = self.EQgeneral_catalog['Time Index Beg'][i]
+            diff = np.abs(self.time - self.tMrate[beg])
+            ibeg = np.where(diff == diff.min())[0][0]
+            # Index of the end 
+            end = self.EQgeneral_catalog['Time Index End'][i]
+            diff = np.abs(self.time - self.tMrate[end])
+            iend = np.where(diff == diff.min())[0][0]
+            
+            # Mean velocities (mean over all duration of the event for each 
+            # element of the fault)
+
+            mean_vels = np.mean(self.velocity[fault][ibeg:iend, :], axis=0)
+            # Mean displacement 
+
+            d = mean_vels * (self.time[iend] - self.time[ibeg])
+            
+            threshold = 0.001 * np.max(d)
+            print(threshold)
+            Lrup = sum(d >= threshold) * self.ds[fault]
+
+            d_mean = d.mean() 
+            M0[i] = self.mu * Lrup * depth * d_mean
+            
+        Mw = (2/3)*np.log10(M0) - 6.01   
+            
+        return Mw
+            
+        
     def compute_tractionT(self, f0=0.6):
         """
         Compute shear traction on the faults.
