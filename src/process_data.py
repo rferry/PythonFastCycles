@@ -16,7 +16,7 @@ import matplotlib.ticker as ticker
 from tools import nice_colormap
 
 class ReadData:
-    def __init__(self, path):
+    def __init__(self, path, tLnuc='Lab'):
         """
         Initialisation of the class. Call functions to read data.
 
@@ -24,6 +24,11 @@ class ReadData:
         ----------
         path : string
             Path to simulation directory. 
+        tLnuc : string, optional
+            Type of Lnuc to use. Can be:
+                * Lab: Lnuc = (mu * Dc) / (sigmaN * (b - a))
+                * Linf: Lnuc = (2 * mu * Dc) / (pi * sigmaN * (1 - a/b)**2)
+            The default is 'Lab'.    
             
         Returns
         -------
@@ -67,17 +72,29 @@ class ReadData:
         # Read EQ catalog
         self.read_EQcatalog()
         
-        # Compute L, Lnuc and Lb
+        # Compute L, Lnuc, Linf and Lb
         self.L = []
-        self.Lnuc = []
+        self.Lab = []  # L_a-b
+        self.Linf = []
         self.Lb = []
         for i in range(self.nbr_fault):
             self.L.append(self.elements[i] * self.ds[i])
-            self.Lnuc.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
+            self.Lab.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
                                                     (self.b[i] - self.a[i])))
+            self.Linf.append(-(2 * self.mu * self.DC[i]) / 
+                             (np.pi * self.sigmaN[i] * self.b[i] * 
+                              (1 - self.a[i] / self.b[i])**2))
             self.Lb.append(-(self.mu * self.Dc[i]) / (self.sigmaN[i] * 
                                                       self.b[i]))
-            
+        
+        # Choose the correct Lnuc
+        if tLnuc == 'Lab':
+            self.Lnuc = self.Lab
+        elif tLnuc == 'Linf':
+            self.Lnuc = self.Linf
+        else:
+            print("Invalide tLnuc !")
+        
 
     def read_binary_file(self, file_type):
         """
