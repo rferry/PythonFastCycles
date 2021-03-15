@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 class Simulation:
     def __init__(self, path, simuname, mu, a, b, fric_law='RateStateAgeing_R',
-                 frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3):
+                 frac_mode='ModeIII', sigma_N=-1e8, Dc=1e-3, tLnuc='Lab'):
         """
         Initialise Simulation class. Compute Lnuc. 
 
@@ -40,6 +40,11 @@ class Simulation:
             Normal stress. The default is -1e8.
         Dc : float, optional
             Critical distance Dc. The default is 1e-3.
+        tLnuc : string, optional
+            Type of Lnuc to use. Can be:
+                * Lab: Lnuc = (mu * Dc) / (sigmaN * (b - a))
+                * Linf: Lnuc = (2 * mu * Dc) / (pi * sigmaN * (1 - a/b)**2)
+            The default is 'Lab'.   
 
         Returns
         -------
@@ -57,8 +62,19 @@ class Simulation:
         self.a = a
         self.b = b
 
-        # Compute Lnuc
-        self.Lnuc = - (self.mu * self.Dc) / (self.sigma_N * (self.b - self.a))
+        # Compute Lab and Linf
+        self.Lab = - (self.mu * self.Dc) / (self.sigma_N * (self.b - self.a))
+        self.Linf = -(2 * self.mu * self.Dc) / (np.pi * self.sigma_N * self.b 
+                                                * (1 - self.a / self.b)**2)
+        
+        # Choose Lnuc
+        if tLnuc == 'Lab':
+            self.Lnuc = self.Lab
+        elif tLnuc == 'Linf':
+            self.Lnuc = self.Linf
+        else:
+            print("Invalide tLnuc !")
+        
 
     def create_all_files(self, sigma_dot, geom_type, L_over_Lnuc=2, show=False,
                          lengths=None, angles=None, xs=None, ys=None, 
