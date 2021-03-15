@@ -136,24 +136,27 @@ class FixSimulations:
         self.check_simulations()
         
         if verbose:
-            line = 'Simulations with -Infinity values are: \n'
-            for i, simu in enumerate(self.simu_affected):
-                line += '- {} \n'.format(simu)
-            print(line)
-            ans = input('Do you want to replace tol_solver ? (y/n) ')
-            if ans == 'y':
-                self.replace_tol_solver()
-                ans2 = input('Do you want to relaunch simulations ? (y/n) ')
-                if ans2 == 'y':
-                    run_simulations(self.simu_affected)
-                elif ans2 == 'n':
+            if len(self.simu_affected) != 0:  # if there are simulations with pb
+                line = 'Simulations with -Infinity values are: \n'
+                for i, simu in enumerate(self.simu_affected):
+                    line += '- {} \n'.format(simu)
+                print(line)
+                ans = input('Do you want to replace tol_solver ? (y/n) ')
+                if ans == 'y':
+                    self.replace_tol_solver()
+                    ans2 = input('Do you want to relaunch simulations ? (y/n) ')
+                    if ans2 == 'y':
+                        run_simulations(self.simu_affected)
+                    elif ans2 == 'n':
+                        pass
+                    else:
+                        print('Your answer is not valid.')
+                elif ans == 'n':
                     pass
                 else:
                     print('Your answer is not valid.')
-            elif ans == 'n':
-                pass
             else:
-                print('Your answer is not valid.')
+                print('No problem detected !')
         
     def check_simulations(self):
         """

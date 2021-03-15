@@ -256,24 +256,29 @@ class ReadData:
         # Open and read MomentRate.out
         with open(self.path + 'MomentRate.out', 'r') as file:
             content = file.readlines()
-
+        
+        tMrate = []  # to store moment rate time
         netMrate = []  # to store net moment rate
         Mrate = []  # to store moment rate for each fault
-        tMrate = []  # to store moment rate time
+        max_vels = []  # to store max slip rate for each fault
         # stores Mrate data temporary
         Mrate_temp = np.ones((len(content)-2, self.nbr_fault))
+        max_vels_temp = np.ones((len(content)-2, self.nbr_fault))
         for i, line in enumerate(content[2:]):  # [2:] to skip headers
             tMrate.append(float(line.split()[1]))
             netMrate.append(float(line.split()[2]))
             for j in range(self.nbr_fault):  # Loop over faults
                 Mrate_temp[i, j] = line.split()[3+j]
+                max_vels_temp[i, j] = line.split()[3+self.nbr_fault+j]
         for i in range(self.nbr_fault):
             Mrate.append(Mrate_temp[:, i])
+            max_vels.append(max_vels_temp[:, i])
 
         # Stores results
         self.netMrate = netMrate
         self.Mrate = Mrate
         self.tMrate = tMrate
+        self.max_vels = max_vels
 
     def read_config(self):
         """
