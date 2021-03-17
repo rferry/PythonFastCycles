@@ -5,14 +5,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="PythonFastCycles", 
-    version="1.0.4",
+    version="1.0.5",
     author="Roxane Ferry",
     author_email='roxane.ferry@ens.fr',
     description="Package to interact with FastCycles",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/rferry/PythonFastCycles",
-    keywords="fast cycles earthquake romanet"
+    keywords="fast cycles earthquake romanet",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
