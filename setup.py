@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="PythonFastCycles", 
-    version="1.0.5",
+    version="1.0.11",
     author="Roxane Ferry",
     author_email='roxane.ferry@ens.fr',
     description="Package to interact with FastCycles",
@@ -14,10 +14,12 @@ setuptools.setup(
     url="https://github.com/rferry/PythonFastCycles",
     keywords="fast cycles earthquake romanet",
     packages=setuptools.find_packages(),
+    package_data={'img': ['*.png']},
+    install_requires=['setuptools-git'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.6'
 )
