@@ -78,9 +78,9 @@ class Simulation:
 
     def create_all_files(self, sigma_dot, geom_type, L_over_Lnuc=2, show=False,
                          lengths=None, angles=None, xs=None, ys=None, 
-                         D_over_Lnuc=0.1, overlap=0.5, GPSx=[10], GPSy=[10], 
-                         Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], 
-                         Vval_x1='default', Vval_x2='default', \
+                         D_over_Lnuc=0.1, overlap=0.5, W_over_Lnuc=0.1, 
+                         Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], GPSx=[10],
+                         GPSy=[10], Vval_x1='default', Vval_x2='default',  
                          Vval_pourc=0.001, stop_crit=1, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False):
         """
@@ -98,14 +98,25 @@ class Simulation:
                 * "2faults_overlapping" for a configuration like Romanet et al. 
                   (2018).
                   Space between two faults can be specified with D_over_Lnuc
-                  and the overlap with overlap       
-                                 L/Lnuc * overlap
+                  and the overlap with overlap   
+                  
+                     L/Lnuc * overlap
                          <--->   
                          ==========
                           | D/Lnuc  
                     ==========
                     <-------->
                       L/Lnuc
+                      
+                * "2faults_aligned" for a configuration with two faults aligned
+                  and separated by a distance W_over_Lnuc.
+                  
+                    L/Lnuc
+                   <------>
+                   ========      ========
+                           <---->
+                           W/Lnuc
+                           
                 * "multiple" for a multiple faults configuration. Faults are 
                   defined with a length (lengths), an angle (angles) and the 
                   distance in x (xs) and y (ys) of one edge from the first 
@@ -198,6 +209,9 @@ class Simulation:
         elif geom_type == '2faults_overlapping':
             self.create_geom_2_faults_overlapping(
                 D_over_Lnuc, L_over_Lnuc, overlap, show=show)
+        elif geom_type == '2faults_aligned':
+            self.create_geom_2faults_aligned(W_over_Lnuc, L_over_Lnuc, 
+                                             show=show)
         elif geom_type == "multiple":
             self.create_geom_multiple_faults(lengths, angles, xs, ys, 
                                              show=show)
@@ -585,7 +599,30 @@ class Simulation:
             self.plot_geometry()
             
         return
+    
+    def create_geom_2faults_aligned(self, W_over_Lnuc, L_over_Lnuc, 
+                                    show=False):
+        self.W_over_Lnuc = W_over_Lnuc 
+        self.L_over_Lnuc = L_over_Lnuc
+        
+        # Create file content
+        content = ['0.000e+00 0.000e+00 \n',
+                   '{} 0.000e+00 \n'.format(L_over_Lnuc * self.Lnuc),
+                   '/\n',
+                   '{} 0.000e+00 \n'.format((L_over_Lnuc + W_over_Lnuc) * self.Lnuc),
+                   '{} 0.000e+00 \n'.format((2 * L_over_Lnuc + W_over_Lnuc) * self.Lnuc),
+                   '/\n']
+        
+        # Write geometry.in
+        with open(self.path + 'geometry.in', 'w') as file:
+            for line in content:
+                file.write(line)
 
+        # Plot the geometry
+        if show:
+            self.plot_geometry()
+
+    
     def create_geom_multiple_faults(self, lengths, angles, xs, ys, show=False):
         """
         Create geometry.in file for a multiple faults geometry.
