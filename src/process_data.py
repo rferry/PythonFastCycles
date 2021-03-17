@@ -1179,3 +1179,5 @@ class ReadData:
         if savefig:
             fig.savefig(self.path + 'GPS_displacements.png', dpi=400, \
                         bbox_inches='tight')
+
+        return fig, axs
