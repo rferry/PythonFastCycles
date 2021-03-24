@@ -691,7 +691,8 @@ class ReadData:
         # Save if savefig=True
         if savefig:
             fig.savefig(self.path + 
-                        'max_vel_evolution_{}.png'.format(plot_type), dpi=400)
+                        'max_vel_evolution_{}.png'.format(plot_type), dpi=400,
+                        bbox_inches='tight')
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, sharey=True, 
                        savefig=True):  
