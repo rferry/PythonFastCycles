@@ -82,7 +82,8 @@ class Simulation:
                          Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], GPSx=[10],
                          GPSy=[10], Vval_x1='default', Vval_x2='default',  
                          Vval_pourc=0.001, stop_crit=1, max_it=10000, 
-                         final_time=10000000, tol_solver=1.00e-8, nf=False):
+                         final_time=10000000, tol_solver=1.00e-8, nf=False,
+                         times=[0], amplitudes=[0]):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -186,6 +187,13 @@ class Simulation:
         nf : int, optional
             Number of fault. If not specified, the number of fault will be 
             read in the "geometry.in" file. The default is not specified.
+        times : list, optional
+            Times in seconds associated with the change of amplitude. Default 
+            is [0].
+        amplitudes : list, optional
+            Amplitudes of the background loading rate as a percentage of the 
+            loading given in "config.in". Thus must be between 0 and 1. Default
+            is [1]. 
 
         Returns
         -------
@@ -201,6 +209,7 @@ class Simulation:
         self.L_over_Lnuc = L_over_Lnuc
         self.create_tides_file(Tampli, Tperiod, Tphase)
         self.create_GPS_file(GPSx, GPSy)
+        self.create_amplitude_file(times, amplitudes)
 
         if geom_type == '1fault':
             x1 = 0
@@ -223,7 +232,7 @@ class Simulation:
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
-        Creates GPS.in at the location 'path'.
+        Create GPS.in at the location 'path'.
 
         Parameters
         ----------
@@ -495,16 +504,54 @@ class Simulation:
                 file.write(line)
 
         return
+    
+    def create_amplitude_file(self, times=[0], amplitudes=[1]):
+        """
+        Create "amplitude.in" file in the simulation directory. Default is no 
+        variation of the background loading rate.
+
+        Parameters
+        ----------
+        times : list, optional
+            Times in seconds associated with the change of amplitude. Default 
+            is [0].
+        amplitudes : list, optional
+            Amplitudes of the background loading rate as a percentage of the 
+            loading given in "config.in". Thus must be between 0 and 1. Default
+            is [1]. 
+
+        Raises
+        ------
+        Exception
+            times and amplitudes must have the same length.
+
+        Returns
+        -------
+        None.
+
+        """
+        # Check that time and amplitude have the same length
+        if len(times) != len(amplitudes):
+            raise Exception('times and amplitudes must have the same length')
+            
+        # Create content
+        content = []
+        for i, time in enumerate(times):
+            content.append('{} {} \n'.format(time, amplitudes[i]))
+        content.append('/\n')
+        
+        # Write amplitude.in
+        with open(self.path + 'amplitude.in', 'w') as file:
+            for line in content:
+                file.write(line)
 
     def create_geom_1fault(self, x1, x2, show=False):
         """
-        Creates geometry.in file for a simple fault configuration with two 
+        Create geometry.in file for a simple fault configuration with two 
         points (x1, 0) and (x2, 0).
 
         Parameters
         ----------
-        path : string
-            Path to the simulation directory.
         x1 : float
             x coordinate of the first point.
         x2 : float
@@ -519,7 +566,7 @@ class Simulation:
         if x1 > x2:
             raise ValueError('x1 should be inferior to x2')
 
-        # Create file content
+        # Create content
         content = ['{} 0.000e+00 \n'.format(x1),
                    '{} 0.000e+00 \n'.format(x2),
                    '/\n']
@@ -551,8 +598,6 @@ class Simulation:
 
         Parameters
         ----------
-        path : string
-            Path to the directory.
         L_nuc : real
             Nucleation length.
         D_over_Lnuc : real
