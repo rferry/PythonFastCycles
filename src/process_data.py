@@ -570,7 +570,8 @@ class ReadData:
         self.tractionT = tractionT   
     
     def plot_max_vel(self, eql=1e-3, ssel=1e-8, start=0, stop=None, 
-                     vel_tot=False, plot_type='each', savefig=True):
+                     lim_type = 'index', vel_tot=False, plot_type='each', 
+                     savefig=True):
         """
         Plot mamimum slip for all faults.
 
@@ -585,6 +586,11 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        lim_type : string, optional
+            Type of start and stop parameters. Can be:
+                * 'index'
+                * 'time' (in year)
+            The default is 'index'.    
         vel_tot : bool, optional
             If True, will use the max_vel from MomentRate.out for each time 
             step. If False will use the max_vel computed from velocity data. 
@@ -603,20 +609,31 @@ class ReadData:
         None.
 
         """
+        # Deal with start and stop type
+        if lim_type == 'index':
+            istart = start
+            istop = stop
+        elif lim_type == 'time':
+            istart = (np.absolute(self.time / (365.25*3600*24) - start)).argmin()
+            istop = (np.absolute(self.time / (365.25*3600*24) - stop)).argmin()            
+        
         # Set which data to use
         if vel_tot:
             max_vel = self.max_vels
-            time = np.array(self.tMrate[start:stop])
+            time = np.array(self.tMrate[istart:istop])
         else:
-            max_vel = self.max_vel
-            time = self.time[start:stop]
+            max_vel = []
+            for i in range(len(self.max_vel)):
+                max_vel.append(self.max_vel[i][istart:istop])
+            # max_vel = self.max_vel
+            time = self.time[istart:istop]
         
         # Determine yaxis lim --> determine min and max velocity
         minv = 1000  # ridiculous value to always be below
         maxv = -9999  # ridiculous value to always be above
         for i in range(self.nbr_fault):
-            mint = np.min(max_vel[i][start:stop])
-            maxt = np.max(max_vel[i][start:stop])
+            mint = np.min(max_vel[i])
+            maxt = np.max(max_vel[i])
             if mint < minv:
                 minv = mint
             else:
@@ -638,11 +655,11 @@ class ReadData:
         for i in range(self.nbr_fault):
             if plot_type=='each':
                 # Plot data
-                axs[i, 0].plot(time, max_vel[i][start:stop], color='red')
+                axs[i, 0].plot(time, max_vel[i], color='red')
     
                 # Fill between line and O
                 axs[i, 0].fill_between(
-                    time, 0, max_vel[i][start:stop], color='lightgrey')
+                    time, 0, max_vel[i], color='lightgrey')
     
                 # Write subplot title if there is more than one fault
                 if self.nbr_fault > 1 :
@@ -650,8 +667,7 @@ class ReadData:
                     axs[i, 0].yaxis.set_label_position("right")
                 
             elif plot_type=='all':
-                axs[0, 0].plot(time, max_vel[i][start:stop], \
-                               label='Fault {}'.format(i+1)) 
+                axs[0, 0].plot(time, max_vel[i], label='Fault {}'.format(i+1)) 
                     
         for ax in fig.axes:
             # Put y axis in log
@@ -659,6 +675,12 @@ class ReadData:
             
             # Set ylim
             ax.set_ylim(minv, maxv + 0.1*(maxv-minv))
+            
+            # Set xlim if lim_type is 'time'
+            if lim_type == 'time':
+                if stop is None:
+                    stop = max(time)
+                ax.set_xlim(start, stop)
             
             # Avoid white space between start and en of axis
             ax.margins(x=0)
