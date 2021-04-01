@@ -1235,6 +1235,8 @@ class ReadData:
 
         # EQ time to plot lines for EQ
         tEQ = np.array(self.EQgeneral_catalog['Time Beg']) / (365.25*24*3600)
+        data = np.array(self.EQgeneral_catalog['Time Beg'])
+        tEQ = data[(data / (365.25*3600*24) < stop) & (data / (365.25*3600*24) > start)] / (365.25*3600*24)
         # Colors of EQ
         colors=[]
         for i, el in enumerate(self.EQgeneral_catalog['Type']):
@@ -1256,6 +1258,12 @@ class ReadData:
             # Plot lines for EQ
             ymin, ymax = ax.get_ylim()
             ax.vlines(tEQ, ymin, ymax, colors=colors, linestyle='--')
+        
+            # Set xlim if lim_type is 'time'
+            if lim_type == 'time':
+                if stop is None:
+                    stop = max(time)
+                ax.set_xlim(start, stop)        
         
         # x axis label
         try:  # if "each"
