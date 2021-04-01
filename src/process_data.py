@@ -721,8 +721,8 @@ class ReadData:
             
         return fig, axs    
         
-    def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, sharey=True, 
-                       savefig=True):  
+    def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, lim_type='index', 
+                       sharey=True, savefig=True):  
         """
         Plot slip rate evolution for all faults.
 
@@ -735,6 +735,11 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        lim_type : string, optional
+            Type of start and stop parameters. Can be:
+                * 'index'
+                * 'time' (in year)
+            The default is 'index'.  
         sharey : bool, optional
             If True, time will be linear. If False, time will depends on 
             timestep. The default is True.
@@ -747,8 +752,20 @@ class ReadData:
         None.
 
         """
+        # Deal with start and stop type
+        if lim_type == 'index':
+            istart = start
+            istop = stop
+        elif lim_type == 'time':
+            istart = (np.absolute(self.time / (365.25*3600*24) - start)).argmin()
+            istop = (np.absolute(self.time / (365.25*3600*24) - stop)).argmin()            
+        
+        max_vel = []
+        for i in range(len(self.max_vel)):
+            max_vel.append(self.max_vel[i][istart:istop])
+
         # Time in year
-        time = self.time[start:stop]/(365.25*24*3600)
+        time = self.time[istart:istop]/(365.25*24*3600)
         
         # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]}
         fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=sharey)
@@ -759,8 +776,7 @@ class ReadData:
         
         # Loop over all the fault 
         for i in range(self.nbr_fault):
-            axs[0].plot(self.max_vel[i][start:stop], time, 
-                        label='Fault {}'.format(i+1))
+            axs[0].plot(max_vel[i], time, label='Fault {}'.format(i+1))
             
         # Put y axis in log
         axs[0].set_xscale('log')
@@ -801,7 +817,7 @@ class ReadData:
             cmp = nice_colormap()
             
             # Plot
-            cs = axs[i+1].pcolormesh(xx, yy, velm[start:stop], 
+            cs = axs[i+1].pcolormesh(xx, yy, velm[istart:istop], 
                                      norm=colors.LogNorm(vmin=1e-12, vmax=1), 
                                          shading='nearest', cmap=cmp)
        
