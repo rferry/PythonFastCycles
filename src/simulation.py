@@ -83,7 +83,7 @@ class Simulation:
                          GPSy=[10], Vval_x1='default', Vval_x2='default',  
                          Vval_pourc=0.001, stop_crit=1, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
-                         times=[0], amplitudes=[0]):
+                         times=[0, 1], amplitudes=[0, 1]):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -505,7 +505,7 @@ class Simulation:
 
         return
     
-    def create_amplitude_file(self, times=[0], amplitudes=[1]):
+    def create_amplitude_file(self, times=[0, 1], amplitudes=[1, 1]):
         """
         Create "amplitude.in" file in the simulation directory. Default is no 
         variation of the background loading rate.
