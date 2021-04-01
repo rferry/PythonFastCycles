@@ -865,7 +865,8 @@ class ReadData:
 
         return fig
         
-    def plot_moment_rate(self, start=0, stop=None, lim_type='index', savefig=True):
+    def plot_moment_rate(self, start=0, stop=None, lim_type='index', 
+                         savefig=True):
         """
         Plot moment rate evolution for all fault and net moment rate.
 
@@ -875,6 +876,11 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        lim_type : string, optional
+            Type of start and stop parameters. Can be:
+                * 'index'
+                * 'time' (in year)
+            The default is 'index'.      
         savefig : bool, optional
             If savefig is True, save the figure in the simulation directory 
             under the name "moment_rate_evolution.png". The default is True.
@@ -1048,7 +1054,8 @@ class ReadData:
             fig.savefig(self.path + 'geometry_out_' + scale + '.png', dpi=400, 
                         bbox_inches='tight')
             
-    def plot_GPS_rate(self, start=0, stop=None, savefig=True):
+    def plot_GPS_rate(self, start=0, stop=None, lim_type='index', 
+                      savefig=True):
         """
         Plot GPS rate for all stations.
 
@@ -1058,6 +1065,11 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        lim_type : string, optional
+            Type of start and stop parameters. Can be:
+                * 'index'
+                * 'time' (in year)
+            The default is 'index'.      
         savefig : bool, optional
             If savefig is True, save the figure in the simulation directory 
             under the name "GPS_rate_evolution.png". The default is True.
@@ -1067,13 +1079,23 @@ class ReadData:
         None.
 
         """
+        # Deal with start and stop type
+        if lim_type == 'index':
+            istart = start
+            istop = stop
+        elif lim_type == 'time':
+            if stop is None:
+                stop = max(self.time) / (365.25*3600*24)
+            istart = (np.absolute(self.tMrate / (365.25*3600*24) - start)).argmin()
+            istop = (np.absolute(self.tMrate / (365.25*3600*24) - stop)).argmin()   
+            
         # TODO ! See why we have weird negative values
         # Determine yaxis lim --> determine min and max velocity
         minv = 1000  # ridiculous value to always be below
         maxv = -9999  # ridiculous value to always be above
         for i in range(len(self.GPSrate)):
-            mint = np.min(self.GPSrate[i][start:stop])
-            maxt = np.max(self.GPSrate[i][start:stop])
+            mint = np.min(self.GPSrate[i][istart:istop])
+            maxt = np.max(self.GPSrate[i][istart:istop])
             if mint < minv:
                 minv = mint
             else:
@@ -1084,7 +1106,7 @@ class ReadData:
                 pass
 
         # Time
-        time = np.array(self.tGPSrate[start:stop]) / (3600*24*365.25)
+        time = np.array(self.tGPSrate[istart:istop]) / (3600*24*365.25)
 
         # Create figure
         fig, axs = plt.subplots(len(self.GPSrate), 1, squeeze=False)
@@ -1092,14 +1114,14 @@ class ReadData:
         # Plot GPS rate for each fault
         for i in range(len(self.GPSrate)):
             # Plot data
-            axs[i, 0].plot(time, self.GPSrate[i][start:stop], color='red')
+            axs[i, 0].plot(time, self.GPSrate[i][istart:istop], color='red')
 
             # Set ylim
             # axs[i, 0].set_ylim(minv, maxv*10)
 
             # Fill between line and O
             axs[i, 0].fill_between(
-                time, 0, self.GPSrate[i][start:stop], color='lightgrey')
+                time, 0, self.GPSrate[i][istart:istop], color='lightgrey')
 
             # Write subplot title for each station
             axs[i, 0].set_ylabel('Station {}'.format(i+1), fontsize=11)
@@ -1132,7 +1154,8 @@ class ReadData:
             fig.savefig(self.path + 'GPS_rate_evolution.png', dpi=400, \
                         bbox_inches='tight')
             
-    def plot_GPS_disp(self, start=0, stop=None, plot_type='all', savefig=True):
+    def plot_GPS_disp(self, start=0, stop=None, lim_type='index', 
+                      plot_type='all', savefig=True):
         """
         Plot GPS cumulative displacement over time.
 
@@ -1142,6 +1165,11 @@ class ReadData:
             Starting index to plot data. The default is 0.
         stop : int, optional
             Last index to plot data. The default is None (i.e. last data)
+        lim_type : string, optional
+            Type of start and stop parameters. Can be:
+                * 'index'
+                * 'time' (in year)
+            The default is 'index'.      
         plot_type : string, optional
             Type of plot. Can be:
                 * 'all': all stations on the same plot
@@ -1156,6 +1184,16 @@ class ReadData:
         None.
 
         """
+        # Deal with start and stop type
+        if lim_type == 'index':
+            istart = start
+            istop = stop
+        elif lim_type == 'time':
+            if stop is None:
+                stop = max(self.time) / (365.25*3600*24)
+            istart = (np.absolute(self.tMrate / (365.25*3600*24) - start)).argmin()
+            istop = (np.absolute(self.tMrate / (365.25*3600*24) - stop)).argmin()  
+            
         ########################
         # Compute displacement #
         ########################
@@ -1177,7 +1215,7 @@ class ReadData:
         ########
         
         # Compute time in year
-        time = np.array(self.tGPSrate[start:stop]) / (3600*24*365.25)
+        time = np.array(self.tGPSrate[istart:istop]) / (3600*24*365.25)
         
         # Create figure 
         if plot_type=='each':
@@ -1188,11 +1226,11 @@ class ReadData:
         # Plot each GPS stations
         for i in range(len(self.GPSrate)):
             if plot_type=='each':
-                axs[i, 0].plot(time, self.disp[i][start:stop], color='k')
+                axs[i, 0].plot(time, self.disp[i][istart:istop], color='k')
                 axs[i, 0].set_ylabel('Station {}'.format(i+1), fontsize=11)
                 axs[i, 0].yaxis.set_label_position("right")
             elif plot_type=='all':
-                axs[0, 0].plot(time, self.disp[i][start:stop], \
+                axs[0, 0].plot(time, self.disp[i][istart:istop], \
                                label='Station {}'.format(i+1))                
 
         # EQ time to plot lines for EQ
