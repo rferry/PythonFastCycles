@@ -261,6 +261,7 @@ class ReadData:
         netMrate = []  # to store net moment rate
         Mrate = []  # to store moment rate for each fault
         max_vels = []  # to store max slip rate for each fault
+        amplitudes = []  # to store background loading amplitude
         # stores Mrate data temporary
         Mrate_temp = np.ones((len(content)-2, self.nbr_fault))
         max_vels_temp = np.ones((len(content)-2, self.nbr_fault))
@@ -270,6 +271,7 @@ class ReadData:
             for j in range(self.nbr_fault):  # Loop over faults
                 Mrate_temp[i, j] = line.split()[3+j]
                 max_vels_temp[i, j] = line.split()[3+self.nbr_fault+j]
+            amplitudes.append(float(line.split()[-1]))    
         for i in range(self.nbr_fault):
             Mrate.append(Mrate_temp[:, i])
             max_vels.append(list(max_vels_temp[:, i]))
@@ -279,6 +281,7 @@ class ReadData:
         self.Mrate = Mrate
         self.tMrate = tMrate
         self.max_vels = max_vels
+        self.amplitudes = amplitudes
 
     def read_config(self):
         """
@@ -622,7 +625,7 @@ class ReadData:
                 maxv = maxt
             else:
                 pass
-        
+
         # Convert time to years 
         time = time / (3600*24*362.25)
 
@@ -693,6 +696,8 @@ class ReadData:
             fig.savefig(self.path + 
                         'max_vel_evolution_{}.png'.format(plot_type), dpi=400,
                         bbox_inches='tight')
+            
+        return fig, axs    
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, sharey=True, 
                        savefig=True):  
