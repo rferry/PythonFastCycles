@@ -279,7 +279,7 @@ class ReadData:
         # Stores results
         self.netMrate = netMrate
         self.Mrate = Mrate
-        self.tMrate = tMrate
+        self.tMrate = np.array(tMrate)
         self.max_vels = max_vels
         self.amplitudes = amplitudes
 
@@ -614,6 +614,8 @@ class ReadData:
             istart = start
             istop = stop
         elif lim_type == 'time':
+            if stop is None:
+                stop = max(self.time) / (365.25*3600*24)
             istart = (np.absolute(self.time / (365.25*3600*24) - start)).argmin()
             istop = (np.absolute(self.time / (365.25*3600*24) - stop)).argmin()            
         
@@ -757,6 +759,8 @@ class ReadData:
             istart = start
             istop = stop
         elif lim_type == 'time':
+            if stop is None:
+                stop = max(self.time) / (365.25*3600*24)
             istart = (np.absolute(self.time / (365.25*3600*24) - start)).argmin()
             istop = (np.absolute(self.time / (365.25*3600*24) - stop)).argmin()            
         
@@ -861,7 +865,7 @@ class ReadData:
 
         return fig
         
-    def plot_moment_rate(self, start=0, stop=None, savefig=True):
+    def plot_moment_rate(self, start=0, stop=None, lim_type='index', savefig=True):
         """
         Plot moment rate evolution for all fault and net moment rate.
 
@@ -880,12 +884,22 @@ class ReadData:
         None.
 
         """
+        # Deal with start and stop type
+        if lim_type == 'index':
+            istart = start
+            istop = stop
+        elif lim_type == 'time':
+            if stop is None:
+                stop = max(self.time) / (365.25*3600*24)
+            istart = (np.absolute(self.tMrate / (365.25*3600*24) - start)).argmin()
+            istop = (np.absolute(self.tMrate / (365.25*3600*24) - stop)).argmin()     
+            
         # Determine yaxis lim --> determine min and max velocity
         minv = 1000  # ridiculous value to always be below
         maxv = -9999  # ridiculous value to always be above
         for i in range(self.nbr_fault):
-            mint = np.min(self.Mrate[i][start:stop])
-            maxt = np.max(self.Mrate[i][start:stop])
+            mint = np.min(self.Mrate[i][istart:istop])
+            maxt = np.max(self.Mrate[i][istart:istop])
             if mint < minv:
                 minv = mint
             else:
@@ -896,7 +910,7 @@ class ReadData:
                 pass
 
         # Time
-        time = np.array(self.tMrate[start:stop]) / (3600*24*365.25)
+        time = np.array(self.tMrate[istart:istop]) / (3600*24*365.25)
 
         # Create figure
         fig, axs = plt.subplots(self.nbr_fault + 1, 1, squeeze=False)
@@ -904,25 +918,25 @@ class ReadData:
         # Plot moment rate for each fault
         for i in range(self.nbr_fault):
             # Plot data
-            axs[i, 0].plot(time, self.Mrate[i][start:stop], color='red')
+            axs[i, 0].plot(time, self.Mrate[i][istart:istop], color='red')
 
             # Set ylim
             axs[i, 0].set_ylim(minv, maxv*10)
 
             # Fill between line and O
             axs[i, 0].fill_between(
-                time, 0, self.Mrate[i][start:stop], color='lightgrey')
+                time, 0, self.Mrate[i][istart:istop], color='lightgrey')
 
             # Write subplot title for each fault
             axs[i, 0].set_ylabel('Fault {}'.format(i+1), fontsize=11)
             axs[i, 0].yaxis.set_label_position("right") 
                 
         # Plot net moment rate 
-        axs[self.nbr_fault, 0].plot(time, self.netMrate[start:stop], color='k')
+        axs[self.nbr_fault, 0].plot(time, self.netMrate[istart:istop], color='k')
         
         # Fill between line and O
         axs[self.nbr_fault, 0].fill_between(time, 0, \
-                                self.netMrate[start:stop], color='lightgrey')
+                                self.netMrate[istart:istop], color='lightgrey')
         
         # Write subplot title for net moment rate
         axs[self.nbr_fault, 0].set_ylabel('Net Mo Rate', fontsize=11)
