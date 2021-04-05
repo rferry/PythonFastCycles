@@ -83,7 +83,8 @@ class Simulation:
                          GPSy=[10], Vval_x1='default', Vval_x2='default',  
                          Vval_pourc=0.001, stop_crit=1, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
-                         times=[0, 1], amplitudes=[0, 1]):
+                         times=None, s_amplitudes=None, n_amplitudes=None,
+                         version=14):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -189,11 +190,15 @@ class Simulation:
             read in the "geometry.in" file. The default is not specified.
         times : list, optional
             Times in seconds associated with the change of amplitude. Default 
-            is [0].
-        amplitudes : list, optional
-            Amplitudes of the background loading rate as a percentage of the 
-            loading given in "config.in". Thus must be between 0 and 1. Default
-            is [1]. 
+            is [0,0].
+        s_amplitudes : list, optional
+            Amplitudes of the shear stress as a percentage of the 
+            background loading given in "config.in". Default is [1,1]. 
+        n_amplitudes : list, optional
+            Amplitudes of the normal stress as a percentage of the normal 
+            traction given in "config.in". Default is [1,1]. 
+        version : int, optional
+            Version of FastCycles. Default is 14.
 
         Returns
         -------
@@ -207,9 +212,13 @@ class Simulation:
             pass
 
         self.L_over_Lnuc = L_over_Lnuc
-        self.create_tides_file(Tampli, Tperiod, Tphase)
         self.create_GPS_file(GPSx, GPSy)
-        self.create_amplitude_file(times, amplitudes)
+        if version < 14:
+            self.create_tides_file(Tampli, Tperiod, Tphase)
+            self.create_amplitude_file(times, s_amplitudes)
+        else:
+            self.create_amplitude_file_version14(times, s_amplitudes, 
+                                                 n_amplitudes)   
 
         if geom_type == '1fault':
             x1 = 0
@@ -505,7 +514,7 @@ class Simulation:
 
         return
     
-    def create_amplitude_file(self, times=[0, 1], amplitudes=[1, 1]):
+    def create_amplitude_file(self, times=None, s_amplitudes=None):
         """
         Create "amplitude.in" file in the simulation directory. Default is no 
         variation of the background loading rate.
@@ -514,30 +523,78 @@ class Simulation:
         ----------
         times : list, optional
             Times in seconds associated with the change of amplitude. Default 
-            is [0].
-        amplitudes : list, optional
+            is [0, 1].
+        s_amplitudes : list, optional
             Amplitudes of the background loading rate as a percentage of the 
-            loading given in "config.in". Thus must be between 0 and 1. Default
-            is [1]. 
+            loading given in "config.in". Default
+            is [1, 1].
+        
+        Returns
+        -------
+        None.
 
-        Raises
-        ------
-        Exception
-            times and amplitudes must have the same length.
+        """            
+        # Deal with default value
+        if times is None:
+            times = [0, 1]
+            s_amplitudes = [1, 1]
+        else:
+            # Check that times and s_amplitudes have the same length
+            if len(times) != len(s_amplitudes):
+                raise Exception('times and s_amplitudes must have the same length')
+            
+        # Create content
+        content = []
+        for i, time in enumerate(times):
+            content.append('{} {} \n'.format(time, s_amplitudes[i]))
+        content.append('/\n')
+        
+        # Write amplitude.in
+        with open(self.path + 'amplitude.in', 'w') as file:
+            for line in content:
+                file.write(line)
+                
+    def create_amplitude_file_version14(self, times=None, s_amplitudes=None, 
+                                        n_amplitudes=None):
+        """
+        Create "amplitude.in" file in the simulation directory for version 14 
+        of FastCycles. Default is no variation of the shear and normal 
+        amplitudes.
+
+        Parameters
+        ----------
+        times : list, optional
+            Times in seconds associated with the change of amplitude. Default 
+            is [0,1].
+        s_amplitudes : list, optional
+            Amplitudes of the shear stress as a percentage of the 
+            background loading given in "config.in". Default is [1,1]. 
+        n_amplitudes : list, optional
+            Amplitudes of the normal stress as a percentage of the normal 
+            traction given in "config.in". Default is [1,1].     
 
         Returns
         -------
         None.
 
         """
-        # Check that time and amplitude have the same length
-        if len(times) != len(amplitudes):
-            raise Exception('times and amplitudes must have the same length')
+        # Deal with default values
+        if times is None:  # if times is None = if nothing is specify
+            times = [0,1]
+            s_amplitudes=[1,1]
+            n_amplitudes=[1,1]
+        # Varying normal stress but constant background loading
+        elif s_amplitudes is None:  # time is given then n_amplitudes is also given
+            s_amplitudes = [1] * len(n_amplitudes) 
+        # Varying background loading but constant normal stress    
+        elif n_amplitudes is None:  # time is given then s_amplitudes is also given
+            n_amplitudes = [1] * len(s_amplitudes)
             
-        # Create content
+        # Create content 
         content = []
         for i, time in enumerate(times):
-            content.append('{} {} \n'.format(time, amplitudes[i]))
+            content.append('{} {} {} \n'.format(time, s_amplitudes[i], 
+                                                n_amplitudes[i]))
         content.append('/\n')
         
         # Write amplitude.in
