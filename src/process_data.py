@@ -245,8 +245,9 @@ class ReadData:
         
     def read_moment_rate(self):
         """
-        Read "MomentRate.out" file to get net moment rate and moment rate for 
-        all faults.
+        Read "MomentRate.out" file to get net moment rate, moment rate for all 
+        faults, maximum slip rate for every time step, shear loading amplitude
+        and normal loading amplitude.
 
         Returns
         -------
@@ -261,7 +262,8 @@ class ReadData:
         netMrate = []  # to store net moment rate
         Mrate = []  # to store moment rate for each fault
         max_vels = []  # to store max slip rate for each fault
-        amplitudes = []  # to store background loading amplitude
+        s_amplitudes = []  # to store shear loading amplitude
+        n_amplitudes = []  # to store normal loading amplitude
         # stores Mrate data temporary
         Mrate_temp = np.ones((len(content)-2, self.nbr_fault))
         max_vels_temp = np.ones((len(content)-2, self.nbr_fault))
@@ -271,7 +273,8 @@ class ReadData:
             for j in range(self.nbr_fault):  # Loop over faults
                 Mrate_temp[i, j] = line.split()[3+j]
                 max_vels_temp[i, j] = line.split()[3+self.nbr_fault+j]
-            amplitudes.append(float(line.split()[-1]))    
+            s_amplitudes.append(float(line.split()[-2]))    
+            n_amplitudes.append(float(line.split()[-1])) 
         for i in range(self.nbr_fault):
             Mrate.append(Mrate_temp[:, i])
             max_vels.append(list(max_vels_temp[:, i]))
@@ -281,7 +284,8 @@ class ReadData:
         self.Mrate = Mrate
         self.tMrate = np.array(tMrate)
         self.max_vels = max_vels
-        self.amplitudes = amplitudes
+        self.s_amplitudes = s_amplitudes
+        self.n_amplitudes = n_amplitudes 
 
     def read_config(self):
         """
