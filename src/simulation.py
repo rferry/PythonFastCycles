@@ -81,7 +81,7 @@ class Simulation:
                          D_over_Lnuc=0.1, overlap=0.5, W_over_Lnuc=0.1, 
                          Tampli=[0.0], Tperiod=[1.0], Tphase=[0.0], GPSx=[10],
                          GPSy=[10], Vval_x1='default', Vval_x2='default',  
-                         Vval_pourc=0.001, stop_crit=1, max_it=10000, 
+                         Vval_pourc=0.001, stop_crit=None, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
                          times=None, s_amplitudes=None, n_amplitudes=None,
                          version=14):
@@ -174,11 +174,12 @@ class Simulation:
             Amplitude of the initial perturbation as a percentage of V0. The 
             default is 0.001.
         stop_crit : int, optional
-            Criteria to stop the simulation. Can be 0, 1 or 2.
-                * 0 : simulation will stop after the first event
-                * 1 : simulation will stop after max_it iterations
-                * 2 : simulation will stop at final_time
-            The default is 1.
+            Criteria to stop the simulation. Can be (version<14 / version>=14):
+                * 0 / 'nucleation' : simulation will stop after the first event
+                * 1 / 'time steps' : simulation will stop after max_it 
+                  iterations
+                * 2 / 'time' : simulation will stop at final_time
+            The default is 1 / 'time steps'.
         max_it : int, optional
             Number of iteration for the simulation. It will only be taken into
             consideration if stop_crit = 1. The default is 10000.
@@ -318,9 +319,9 @@ class Simulation:
         return
 
     def create_config_file(self, sigma_dot, Vval_x1='default', 
-                           Vval_x2='default', Vval_pourc=0.001, stop_crit=1, 
-                           max_it=10000, final_time=1e7, tol_solver=1.00e-8, 
-                           nf=False):
+                           Vval_x2='default', Vval_pourc=0.001, max_it=10000, 
+                           stop_crit=None, final_time=1e7, 
+                           tol_solver=1.00e-8, nf=False):
         """
         Create "config.in" file in the simulation directory.
 
@@ -335,11 +336,12 @@ class Simulation:
             Amplitude of the initial perturbation as a percentage of V0. The 
             default is 0.001.
         stop_crit : int, optional
-            Criteria to stop the simulation. Can be 0, 1 or 2.
-                * 0 : simulation will stop after the first event
-                * 1 : simulation will stop after max_it iterations
-                * 2 : simulation will stop at final_time
-            The default is 1.
+            Criteria to stop the simulation. Can be (version<14 / version>=14):
+                * 0 / 'nucleation' : simulation will stop after the first event
+                * 1 / 'time steps' : simulation will stop after max_it 
+                  iterations
+                * 2 / 'time' : simulation will stop at final_time
+            The default is 1 / 'time steps'.
         max_it : int, optional
             Number of iteration for the simulation. It will only be taken into
             consideration if stop_crit = 1. The default is 10000.
@@ -396,11 +398,20 @@ class Simulation:
         
         if Vval_x1 > Vval_x2:
             raise ValueError('Vval_x1 should be inferior to Vval_x2')
+        
             
-        # Preliminary check for stop_criteria
-        if stop_crit not in [0, 1, 2]:
-            raise TypeError('stop_criteria should be 0, 1 or 2')
-
+        # Preliminary check for stop_criteria and set default value
+        if self.version >= 14:
+            if stop_crit is None:  # if it is the default value
+                stop_crit = 'time steps'
+            elif stop_crit not in ['nucleation', 'time steps', 'time']:
+                raise TypeError("stop_criteria should be 'nucleation', \
+                                'time steps', 'time' ")
+        else:
+            if stop_crit is None:  # if it is the default value
+                stop_crit = 1
+            elif stop_crit not in [0, 1, 2]:
+                raise TypeError("stop_criteria should be 0, 1 or 2")
         # Computes Lb
         self.Lb = - (self.mu * self.Dc) / (self.sigma_N * self.b)
 
