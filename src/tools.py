@@ -158,8 +158,8 @@ class FixSimulations:
                     print('Your answer is not valid.')
             # If no simulations need to be changed         
             else:
-                print('No problem detected !')
-        
+                print('No problem detected ! \n----------------------- \n')
+                       
     def check_simulations(self):
         """
         Read MomentRate.out for all simulations in simunames and find those 
