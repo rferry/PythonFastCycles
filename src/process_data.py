@@ -16,7 +16,7 @@ import matplotlib.ticker as ticker
 from tools import nice_colormap
 
 class ReadData:
-    def __init__(self, path, tLnuc='Lab'):
+    def __init__(self, path, tLnuc='Lab', which_binary=['time', 'velocity']):
         """
         Initialisation of the class. Call functions to read data.
 
@@ -28,7 +28,14 @@ class ReadData:
             Type of Lnuc to use. Can be:
                 * Lab: Lnuc = (mu * Dc) / (sigmaN * (b - a))
                 * Linf: Lnuc = (2 * mu * Dc) / (pi * sigmaN * (1 - a/b)**2)
-            The default is 'Lab'.    
+            The default is 'Lab'.   
+        which_binary : list of strings, optional
+            List of binary file types to read. Can be a mix of:
+                * time
+                * velocity
+                * theta
+                * tractionN
+            The default is ['time', 'velocity'].
             
         Returns
         -------
@@ -58,10 +65,8 @@ class ReadData:
         self.files_in_dir = os.listdir(self.path)  # Lists all the files
 
         # Run read_file to read time, velocity, tractionN and theta files
-        self.read_binary_file('time')
-        self.read_binary_file('velocity')
-        self.read_binary_file('theta')
-        self.read_binary_file('tractionN')
+        for file in which_binary:
+            self.read_binary_file(file)
 
         # Read MomentRate.out
         self.read_moment_rate()
