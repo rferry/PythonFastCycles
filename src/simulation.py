@@ -84,7 +84,7 @@ class Simulation:
                          Vval_pourc=0.001, stop_crit=None, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
                          times=None, s_amplitudes=None, n_amplitudes=None,
-                         version=14):
+                         version=14, amplitude_decimation_factor=1):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -200,6 +200,8 @@ class Simulation:
             traction given in "config.in". Default is [1,1]. 
         version : int, optional
             Version of FastCycles. Default is 14.
+        amplitude_decimation_factor : float, optional
+            Decimation factor of the optimal time step computed for amplitude.
 
         Returns
         -------
@@ -213,8 +215,9 @@ class Simulation:
             pass
 
         self.L_over_Lnuc = L_over_Lnuc
+        self.version = version 
         self.create_GPS_file(GPSx, GPSy)
-        if version < 14:
+        if self.version < 14:
             self.create_tides_file(Tampli, Tperiod, Tphase)
             self.create_amplitude_file(times, s_amplitudes)
         else:
@@ -238,7 +241,8 @@ class Simulation:
             raise Exception('geom_type does not exist.')
 
         self.create_config_file(sigma_dot, Vval_x1, Vval_x2, Vval_pourc, 
-                                stop_crit, max_it, final_time, tol_solver, nf)
+                                stop_crit, max_it, final_time, tol_solver, nf, 
+                                amplitude_decimation_factor)
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
@@ -320,8 +324,8 @@ class Simulation:
 
     def create_config_file(self, sigma_dot, Vval_x1='default', 
                            Vval_x2='default', Vval_pourc=0.001, max_it=10000, 
-                           stop_crit=None, final_time=1e7, 
-                           tol_solver=1.00e-8, nf=False):
+                           stop_crit=None, final_time=1e7, tol_solver=1.00e-8, 
+                           nf=False, amplitude_decimation_factor=1):
         """
         Create "config.in" file in the simulation directory.
 
@@ -351,6 +355,8 @@ class Simulation:
         nf : int, optional
             Number of fault. If not specified, the number of fault will be 
             read in the "geometry.in" file. The default is not specified.
+        amplitude_decimation_factor : float, optional
+            Decimation factor of the optimal time step computed for amplitude.
 
         Raises
         ------
@@ -359,7 +365,8 @@ class Simulation:
             value.            
             You must specify a fault number or create geometry.in first
         TypeError
-            Stop_criteria should be 0, 1 or 2..
+            Stop_criteria should be 0, 1 or 2 (version < 14) or 'nucleation', 
+            'time steps', 'time (version >= 14).
         ValueError
             Vval_x1 should be inferior to Vval_x2.
 
@@ -380,6 +387,7 @@ class Simulation:
         self.max_it = max_it
         self.final_time = final_time
         self.nf = nf
+        self.amplitude_decimation_factor = amplitude_decimation_factor
 
         # Preliminary check for Vval_x1 and Vval_x2
         if Vval_x1 == 'default' and Vval_x2 == 'default':
@@ -515,8 +523,13 @@ class Simulation:
                     'stride_time = 5\n',
                     'GPS_stride = 1\n',
                     'isave_node = 1\n',
-                    'freq_writing_file = 1000\n',
-                    '/']
+                    'freq_writing_file = 1000\n']
+        if self.version >= 14:
+            content += ['amplitude_decimation_factor = {}\n'.format(
+                self.amplitude_decimation_factor),
+                        '/']
+        else:
+            content += ['/']
 
         # Write config.in
         with open(self.path + 'config.in', 'w') as file:
