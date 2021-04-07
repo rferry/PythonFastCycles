@@ -84,7 +84,8 @@ class Simulation:
                          Vval_pourc=0.001, stop_crit=None, max_it=10000, 
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
                          times=None, s_amplitudes=None, n_amplitudes=None,
-                         version=14, amplitude_decimation_factor=1):
+                         version=14, amplitude_decimation_factor=1, 
+                         shear_magnitude=0, normal_magnitude=0):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -202,6 +203,12 @@ class Simulation:
             Version of FastCycles. Default is 14.
         amplitude_decimation_factor : float, optional
             Decimation factor of the optimal time step computed for amplitude.
+        shear_magnitude : float, optional
+            Shear traction is given as background + shear_magnitude*amplitude,
+            with amplitude between 0 and 1.
+        normal_magnitude : float, optional
+            Normal traction is given as background + normal_magnitude*amplitude
+            with amplitude between 0 and 1.
 
         Returns
         -------
@@ -325,7 +332,8 @@ class Simulation:
     def create_config_file(self, sigma_dot, Vval_x1='default', 
                            Vval_x2='default', Vval_pourc=0.001, max_it=10000, 
                            stop_crit=None, final_time=1e7, tol_solver=1.00e-8, 
-                           nf=False, amplitude_decimation_factor=1):
+                           nf=False, amplitude_decimation_factor=1, 
+                           shear_magnitude=0, normal_magnitude=0):
         """
         Create "config.in" file in the simulation directory.
 
@@ -357,7 +365,13 @@ class Simulation:
             read in the "geometry.in" file. The default is not specified.
         amplitude_decimation_factor : float, optional
             Decimation factor of the optimal time step computed for amplitude.
-
+        shear_magnitude : float, optional
+            Shear traction is given as background + shear_magnitude*amplitude,
+            with amplitude between 0 and 1.
+        normal_magnitude : float, optional
+            Normal traction is given as background + normal_magnitude*amplitude
+            with amplitude between 0 and 1.
+            
         Raises
         ------
         Exception
@@ -388,6 +402,8 @@ class Simulation:
         self.final_time = final_time
         self.nf = nf
         self.amplitude_decimation_factor = amplitude_decimation_factor
+        self.shear_magnitude = shear_magnitude 
+        self.normal_magnitude = normal_magnitude 
 
         # Preliminary check for Vval_x1 and Vval_x2
         if Vval_x1 == 'default' and Vval_x2 == 'default':
@@ -454,8 +470,14 @@ class Simulation:
                    'sigma22_dot_inf = {} \n'.format(self.sigma_dot[1, 1]),
                    'sigma12_dot_inf = {} \n'.format(self.sigma_dot[0, 1]),
                    'sigma31_dot_inf = {} \n'.format(self.sigma_dot[0, 2]),
-                   'sigma32_dot_inf = {} \n'.format(self.sigma_dot[1, 2]),
-                   '/\n']
+                   'sigma32_dot_inf = {} \n'.format(self.sigma_dot[1, 2])]
+        if self.version >= 14:
+            content += ['shear_magnitude = {} \n'.format(self.shear_magnitude),
+                        'normal_magnitude = {} \n'.format(
+                            self.normal_magnitude),
+                        '/\n']
+        else:
+            content += ['/\n']
 
         # Create one "&fault_friction" section per fault
         for i in range(self.nf):
