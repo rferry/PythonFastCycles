@@ -247,9 +247,13 @@ class Simulation:
         else:
             raise Exception('geom_type does not exist.')
 
-        self.create_config_file(sigma_dot, Vval_x1, Vval_x2, Vval_pourc, 
-                                stop_crit, max_it, final_time, tol_solver, nf, 
-                                amplitude_decimation_factor)
+        self.create_config_file(sigma_dot=sigma_dot, Vval_x1=Vval_x1, 
+                                Vval_x2=Vval_x2, Vval_pourc=Vval_pourc, nf=nf, 
+                                stop_crit=stop_crit, max_it=max_it, 
+                                final_time=final_time, tol_solver=tol_solver,
+                                amplitude_decimation_factor=amplitude_decimation_factor, 
+                                shear_magnitude=shear_magnitude,
+                                normal_magnitude=normal_magnitude)
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
@@ -429,8 +433,7 @@ class Simulation:
             if stop_crit is None:  # if it is the default value
                 stop_crit = 'time steps'
             elif stop_crit not in ['nucleation', 'time steps', 'time']:
-                raise TypeError("stop_criteria should be 'nucleation', \
-                                'time steps', 'time' ")
+                raise TypeError("stop_criteria should be 'nucleation', 'time steps', 'time' ")
         else:
             if stop_crit is None:  # if it is the default value
                 stop_crit = 1
