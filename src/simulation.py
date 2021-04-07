@@ -542,19 +542,21 @@ class Simulation:
                     'tol_interp = 1.000e-08 \n',
                     'iprec = 4\n',
                     'icheck_interp = 0\n',
-                    'omp_threads = 4\n',
-                    '/\n',
-                    '&output\n',
-                    'stride_time = 5\n',
-                    'GPS_stride = 1\n',
-                    'isave_node = 1\n',
-                    'freq_writing_file = 1000\n']
+                    'omp_threads = 4\n']
         if self.version >= 14:
             content += ['amplitude_decimation_factor = {}\n'.format(
                 self.amplitude_decimation_factor),
-                        '/']
+                        '/\n']
         else:
-            content += ['/']
+            content += ['/\n']
+        
+        content += ['&output\n',
+                    'stride_time = 5\n',
+                    'GPS_stride = 1\n',
+                    'isave_node = 1\n',
+                    'freq_writing_file = 1000\n',
+                    '/']
+
 
         # Write config.in
         with open(self.path + 'config.in', 'w') as file:
