@@ -619,10 +619,10 @@ class Simulation:
             is [0,1].
         s_amplitudes : list, optional
             Amplitudes of the shear stress as a percentage of the 
-            background loading given in "config.in". Default is [1,1]. 
+            background loading given in "config.in". Default is [0,0]. 
         n_amplitudes : list, optional
             Amplitudes of the normal stress as a percentage of the normal 
-            traction given in "config.in". Default is [1,1].     
+            traction given in "config.in". Default is [0,0].     
 
         Returns
         -------
@@ -632,14 +632,14 @@ class Simulation:
         # Deal with default values
         if times is None:  # if times is None = if nothing is specify
             times = [0,1]
-            s_amplitudes=[1,1]
-            n_amplitudes=[1,1]
+            s_amplitudes=[0,0]
+            n_amplitudes=[0,0]
         # Varying normal stress but constant background loading
         elif s_amplitudes is None:  # time is given then n_amplitudes is also given
-            s_amplitudes = [1] * len(n_amplitudes) 
+            s_amplitudes = [0] * len(n_amplitudes) 
         # Varying background loading but constant normal stress    
         elif n_amplitudes is None:  # time is given then s_amplitudes is also given
-            n_amplitudes = [1] * len(s_amplitudes)
+            n_amplitudes = [0] * len(s_amplitudes)
             
         # Create content 
         content = []
