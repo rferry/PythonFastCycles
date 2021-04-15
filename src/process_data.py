@@ -70,6 +70,14 @@ class ReadData:
 
         # Read MomentRate.out
         self.read_moment_rate()
+        
+        # Read amplitude.in
+        # Will only work for version >= 14
+        # try:
+        #     self.read_amplitudes()
+        # except:
+        #     pass
+        self.read_amplitudes()
 
         # Compute max_vel
         self.compute_max_vel()
@@ -289,8 +297,8 @@ class ReadData:
         self.Mrate = Mrate
         self.tMrate = np.array(tMrate)
         self.max_vels = max_vels
-        self.s_amplitudes = s_amplitudes
-        self.n_amplitudes = n_amplitudes 
+        self.s_amplitudes = np.array(s_amplitudes)
+        self.n_amplitudes = np.array(n_amplitudes) 
 
     def read_config(self):
         """
@@ -351,7 +359,11 @@ class ReadData:
                     line.startswith('sigma23_dot_inf'):
                 sigma_dot[2, 1] = float(line.split()[2])  
                 sigma_dot[1, 2] = float(line.split()[2])  
-        
+            elif line.startswith('shear_magnitude'):
+                shear_magnitude = float(line.split()[2])
+            elif line.startswith('normal_magnitude'):
+                normal_magnitude = float(line.split()[2])
+            
         # Store values 
         self.a = a
         self.b = b
@@ -360,6 +372,14 @@ class ReadData:
         self.sigmaN = sigmaN
         self.ds = ds
         self.sigma_dot = sigma_dot 
+        try:
+            self.shear_magnitude = shear_magnitude
+        except:
+            pass
+        try:
+            self.normal_magnitude = normal_magnitude 
+        except:
+            pass
     
     def read_tides(self):
         """
@@ -445,6 +465,38 @@ class ReadData:
         # Stores results
         self.tGPSrate = tGPSrate
         self.GPSrate = GPSrate
+        
+    def read_amplitudes(self):
+        '''
+        Read 'amplitude.in' to get initial time and shear and normal 
+        amplitudes. Time is stored in 'tAmpli', shear amplitudes in 'sAmpli'
+        and normal amplitudes in 'nAmpli'.
+
+        Returns
+        -------
+        None.
+
+        '''
+        # Open and read 'amplitude.in'
+        with open(self.path + 'amplitude.in', 'r') as file:
+            content = file.readlines()
+        
+        # Initialisation
+        tAmpli = []
+        sAmpli = []
+        nAmpli = []
+        
+        # Loop over the file and read values
+        for i, line in enumerate(content[:-1]):
+            tAmpli.append(float(line.split()[0]))
+            sAmpli.append(float(line.split()[1]))
+            nAmpli.append(float(line.split()[2]))
+        
+        
+        # Store results 
+        self.tAmpli = np.array(tAmpli)
+        self.sAmpli = np.array(sAmpli)
+        self.nAmpli = np.array(nAmpli)
         
     def read_EQcatalog(self):
         """
