@@ -534,9 +534,14 @@ class Simulation:
                     "static_kernel = 'hmatrix'\n",
                     'initial_time = 0.000e+00 \n',
                     'time_step_max = 10\n',
-                    'final_time = {}\n'.format(self.final_time),
-                    'stop_criteria = {}\n'.format(self.stop_crit),
-                    'cut_vel = 1.000e-08 \n',
+                    'final_time = {}\n'.format(self.final_time)]
+        
+        if self.version >= 14:
+            content += ["stop_criteria = '{}'\n".format(self.stop_crit)]
+        else:
+            content += ['stop_criteria = {}\n'.format(self.stop_crit)]
+            
+        content += ['cut_vel = 1.000e-08 \n',
                     'max_it = {} \n'.format(self.max_it),
                     'tol_solver = {} \n'.format(tol_solver),
                     'tol_interp = 1.000e-08 \n',
