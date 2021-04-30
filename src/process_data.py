@@ -486,17 +486,33 @@ class ReadData:
         sAmpli = []
         nAmpli = []
         
+        tAmpli_temp = []
+        sAmpli_temp = []
+        nAmpli_temp = []
+        
         # Loop over the file and read values
         for i, line in enumerate(content[:-1]):
+            if line.startswith('/'):
+                # Store data for one fault
+                tAmpli.append(tAmpli_temp)
+                sAmpli.append(sAmpli_temp)
+                nAmpli.append(nAmpli_temp)
+                
+                # Reset 
+                tAmpli_temp = []
+                sAmpli_temp = []
+                nAmpli_temp = []
+                
+                continue
+                
             tAmpli.append(float(line.split()[0]))
             sAmpli.append(float(line.split()[1]))
             nAmpli.append(float(line.split()[2]))
-        
-        
+     
         # Store results 
-        self.tAmpli = np.array(tAmpli)
-        self.sAmpli = np.array(sAmpli)
-        self.nAmpli = np.array(nAmpli)
+        self.tAmpli = np.array(tAmpli, dtype=object)
+        self.sAmpli = np.array(sAmpli, dtype=object)
+        self.nAmpli = np.array(nAmpli, dtype=object)        
         
     def read_EQcatalog(self):
         """
