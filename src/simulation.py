@@ -984,18 +984,20 @@ class Simulation:
             ax.tick_params(axis='both', which='major', labelsize=10)    
         
         # Plot GPS stations
-        if scale == 'Lnuc':
-            ax.scatter([el / self.Lnuc for el in self.GPSx], 
-                       [el/ self.Lnuc for el in self.GPSy], color='red', s=20)
-            # Add number next to the station
-            for i, x in enumerate(self.GPSx):
-                ax.annotate(i+1, (x / self.Lnuc + 0.03, 
-                            self.GPSy[i] / self.Lnuc + 0.03), color='red')
-        else :
-            ax.scatter(self.GPSx, self.GPSy, color='red', s=20)
-            # Add number next to the station
-            for i, x in enumerate(self.GPSx):
-                ax.annotate(i+1, (x + 7, self.GPSy[i] + 7), color='red')
+        if GPS:
+            if scale == 'Lnuc':
+                ax.scatter([el / self.Lnuc for el in self.GPSx], 
+                           [el/ self.Lnuc for el in self.GPSy], color='red', 
+                           s=20)
+                # Add number next to the station
+                for i, x in enumerate(self.GPSx):
+                    ax.annotate(i+1, (x / self.Lnuc + 0.03, 
+                                self.GPSy[i] / self.Lnuc + 0.03), color='red')
+            else :
+                ax.scatter(self.GPSx, self.GPSy, color='red', s=20)
+                # Add number next to the station
+                for i, x in enumerate(self.GPSx):
+                    ax.annotate(i+1, (x + 7, self.GPSy[i] + 7), color='red')
         
         fig.tight_layout()
         
