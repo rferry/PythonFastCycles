@@ -885,7 +885,6 @@ class Simulation:
         None.
 
         """
-        # TODO ! Add GPS station plot
         # Read geometry.in
         with open(self.path + 'geometry.in', 'r') as file:
             content = file.readlines()
