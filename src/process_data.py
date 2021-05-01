@@ -1058,15 +1058,17 @@ class ReadData:
             fig.savefig(self.path + 'moment_rate_evolution.png', dpi=400)
         pass
     
-    def plot_geometry(self, scale='Lnuc', savefig=True):
+    def plot_geometry(self, scale='Lnuc', GPS=True, savefig=True):
         """
-        Plot the fault system geometry.
+        Plot the fault system geometry.out
 
         Parameters
         ----------
         scale : str, optional
             Scale of axis. Can be 'Lnuc' (normalised by Lnuc) or 'X'. The 
             default is 'Lnuc'.
+        GPS : bool, optional
+            If GPS is True, plot the GPS stations. Default is True.
         savefig : bool, optional
             If savefig is True, save the figure in the simulation directory 
             under the name "slip_rate_evolution.png". The default is True.
@@ -1076,21 +1078,58 @@ class ReadData:
         None.
 
         """
-        # TODO ! Add GPS station plot 
         # Computing figure limits 
-        maxi = -np.inf
-        mini = np.inf
+        
+        # Compute faults limits 
+        ymaxi_faults = -np.inf
+        ymini_faults = np.inf
+        xmaxi_faults = -np.inf
+        xmini_faults = np.inf        
         for i in range(self.nbr_fault):
-            maxtemp = np.max(self.ey[i])
-            mintemp = np.min(self.ey[i])
-            if maxtemp > maxi:
-                maxi = maxtemp
-            if mintemp < mini:
-                mini = mintemp
+            ymaxtemp = np.max(self.ey[i])
+            ymintemp = np.min(self.ey[i])
+            xmaxtemp = np.max(self.ex[i])
+            xmintemp = np.min(self.ex[i])
+            if ymaxtemp > ymaxi_faults:
+                ymaxi_faults = ymaxtemp
+            if ymintemp < ymini_faults:
+                ymini_faults = ymintemp
+            if xmaxtemp > xmaxi_faults:
+                xmaxi_faults = xmaxtemp
+            if xmintemp < xmini_faults:
+                xmini_faults = xmintemp
+                
         if scale == 'Lnuc':        
-            mini = mini / self.Lnuc[0]
-            maxi = maxi / self.Lnuc[0]
-        Ly = maxi-mini # extend in y direction of the fault system
+            ymini_faults = ymini_faults / self.Lnuc[0]
+            ymaxi_faults = ymaxi_faults / self.Lnuc[0]
+            xmini_faults = xmini_faults / self.Lnuc[0]
+            xmaxi_faults = xmaxi_faults / self.Lnuc[0]  
+            
+        Ly = ymaxi_faults - ymini_faults # fault system extend in y direction 
+        Lx = xmaxi_faults - xmini_faults # fault system extend in x direction 
+        
+        # Compute GPS limits
+        if GPS:
+            ymaxi_GPS = np.max(self.GPSy)
+            ymini_GPS = np.min(self.GPSy)
+            xmaxi_GPS = np.max(self.GPSx)
+            xmini_GPS = np.min(self.GPSx)
+            
+            if scale == 'Lnuc':
+                ymaxi_GPS = ymaxi_GPS / self.Lnuc[0]
+                ymini_GPS = ymini_GPS / self.Lnuc[0]
+                xmaxi_GPS = xmaxi_GPS / self.Lnuc[0]
+                xmini_GPS = xmini_GPS / self.Lnuc[0]
+
+            ymaxi = max(ymaxi_faults, ymaxi_GPS)
+            ymini = min(ymini_faults, ymini_GPS)
+            xmaxi = max(xmaxi_faults, xmaxi_GPS)
+            xmini = min(xmini_faults, xmini_GPS)
+        else :
+            ymaxi = ymaxi_faults
+            ymini = ymini_faults
+            xmaxi = xmaxi_faults
+            xmini = xmini_faults
         
         # Initialise figure
         fig, ax = plt.subplots(1, 1)
@@ -1111,9 +1150,26 @@ class ReadData:
             ytext = 0.5 *(np.max(y) + np.min(y))
             ax.text(xtext, ytext, 'F{}'.format(i+1), bbox=dict(fc='yellow', 
                                    ec='none', pad=1), ha='center', va='center')
+
+        # Plot GPS stations
+        if GPS:
+            if scale == 'Lnuc':
+                ax.scatter([el / self.Lnuc[0] for el in self.GPSx], 
+                           [el/ self.Lnuc[0] for el in self.GPSy], color='red', 
+                           s=20)
+                # Add number next to the station
+                for i, x in enumerate(self.GPSx):
+                    ax.annotate(i+1, (x / self.Lnuc[0] + 0.03, 
+                                self.GPSy[i] / self.Lnuc[0] + 0.03), 
+                                color='red')
+            else :
+                ax.scatter(self.GPSx, self.GPSy, color='red', s=20)
+                # Add number next to the station
+                for i, x in enumerate(self.GPSx):
+                    ax.annotate(i+1, (x + 7, self.GPSy[i] + 7), color='red')
             
         # Set axis limits and aspect 
-        ax.set_ylim(mini - Ly*0.1, maxi + Ly*0.1)
+        ax.set_ylim(ymini - Ly*0.1, ymaxi + Ly*0.1)
         ax.set_aspect('equal')
         
         # Axis labels
@@ -1126,6 +1182,8 @@ class ReadData:
             
         # Change tick size    
         ax.tick_params(axis='both', which='major', labelsize=10)    
+        
+        fig.tight_layout()
         
         if savefig:
             fig.savefig(self.path + 'geometry_out_' + scale + '.png', dpi=400, 
