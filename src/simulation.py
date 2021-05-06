@@ -85,7 +85,7 @@ class Simulation:
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
                          times=None, s_amplitudes=None, n_amplitudes=None,
                          version=14, amplitude_decimation_factor=1, 
-                         shear_magnitude=0, normal_magnitude=0):
+                         amp_shear_loading=None, amp_normal_loading=None):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -203,12 +203,16 @@ class Simulation:
             Version of FastCycles. Default is 14.
         amplitude_decimation_factor : float, optional
             Decimation factor of the optimal time step computed for amplitude.
-        shear_magnitude : float, optional
-            Shear traction is given as background + shear_magnitude*amplitude,
-            with amplitude between 0 and 1.
-        normal_magnitude : float, optional
-            Normal traction is given as background + normal_magnitude*amplitude
-            with amplitude between 0 and 1.
+        amp_shear_loading : list of float, optional
+            Shear traction is given as:
+                background + amp_shear_loading*amplitude, with amplitude 
+                between 0 and 1.
+            Must be a list of size nf.
+        amp_normal_loading : list of float, optional
+            Normal traction is given as:
+                background + amp_normal_loading*amplitude with amplitude 
+                between 0 and 1.
+            Must be a list of size nf.
 
         Returns
         -------
@@ -224,12 +228,12 @@ class Simulation:
         self.L_over_Lnuc = L_over_Lnuc
         self.version = version 
         self.create_GPS_file(GPSx, GPSy)
-        if self.version < 14:
-            self.create_tides_file(Tampli, Tperiod, Tphase)
-            self.create_amplitude_file(times, s_amplitudes)
-        else:
-            self.create_amplitude_file_version14(times, s_amplitudes, 
-                                                 n_amplitudes)   
+        # if self.version < 14:
+        #     self.create_tides_file(Tampli, Tperiod, Tphase)
+        #     self.create_amplitude_file(times, s_amplitudes)
+        # else:
+        #     self.create_amplitude_file_version14(times, s_amplitudes, 
+        #                                          n_amplitudes)   
 
         if geom_type == '1fault':
             x1 = 0
@@ -251,9 +255,10 @@ class Simulation:
                                 Vval_x2=Vval_x2, Vval_pourc=Vval_pourc, nf=nf, 
                                 stop_crit=stop_crit, max_it=max_it, 
                                 final_time=final_time, tol_solver=tol_solver,
-                                amplitude_decimation_factor=amplitude_decimation_factor, 
-                                shear_magnitude=shear_magnitude,
-                                normal_magnitude=normal_magnitude)
+                                amplitude_decimation_factor=
+                                amplitude_decimation_factor, 
+                                amp_shear_loading=amp_shear_loading,
+                                amp_normal_loading=amp_normal_loading)
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
@@ -337,7 +342,7 @@ class Simulation:
                            Vval_x2='default', Vval_pourc=0.001, max_it=10000, 
                            stop_crit=None, final_time=1e7, tol_solver=1.00e-8, 
                            nf=False, amplitude_decimation_factor=1, 
-                           shear_magnitude=0, normal_magnitude=0):
+                           amp_shear_loading=None, amp_normal_loading=None):
         """
         Create "config.in" file in the simulation directory.
 
@@ -369,12 +374,16 @@ class Simulation:
             read in the "geometry.in" file. The default is not specified.
         amplitude_decimation_factor : float, optional
             Decimation factor of the optimal time step computed for amplitude.
-        shear_magnitude : float, optional
-            Shear traction is given as background + shear_magnitude*amplitude,
-            with amplitude between 0 and 1.
-        normal_magnitude : float, optional
-            Normal traction is given as background + normal_magnitude*amplitude
-            with amplitude between 0 and 1.
+        amp_shear_loading : list of float, optional
+            Shear traction is given as:
+                background + amp_shear_loading*amplitude, with amplitude 
+                between 0 and 1.
+            Must be a list of size nf.
+        amp_normal_loading : list of float, optional
+            Normal traction is given as:
+                background + amp_normal_loading*amplitude with amplitude 
+                between 0 and 1.
+            Must be a list of size nf.
             
         Raises
         ------
@@ -387,6 +396,9 @@ class Simulation:
             'time steps', 'time (version >= 14).
         ValueError
             Vval_x1 should be inferior to Vval_x2.
+        ValueError
+            amp_shear_loading and amp_nornal_loading must have a size equal to
+            the number of faults.
 
         Returns
         -------
@@ -406,8 +418,8 @@ class Simulation:
         self.final_time = final_time
         self.nf = nf
         self.amplitude_decimation_factor = amplitude_decimation_factor
-        self.shear_magnitude = shear_magnitude 
-        self.normal_magnitude = normal_magnitude 
+        self.amp_shear_loading = amp_shear_loading
+        self.amp_normal_loading = amp_normal_loading
 
         # Preliminary check for Vval_x1 and Vval_x2
         if Vval_x1 == 'default' and Vval_x2 == 'default':
@@ -433,7 +445,8 @@ class Simulation:
             if stop_crit is None:  # if it is the default value
                 stop_crit = 'time steps'
             elif stop_crit not in ['nucleation', 'time steps', 'time']:
-                raise TypeError("stop_criteria should be 'nucleation', 'time steps', 'time' ")
+                raise TypeError("stop_criteria should be 'nucleation'," \
+                                "'time steps', 'time' ")
         else:
             if stop_crit is None:  # if it is the default value
                 stop_crit = 1
@@ -451,6 +464,18 @@ class Simulation:
                 self.nf = content.count('/')
             except Exception:  # if geometry.in do not exist
                 print('You must specify a fault number or create geometry.in')
+                
+        # Check amp_shear_loading and amp_normal_loading dimensions 
+        if self.amp_shear_loading and self.nf != len(self.amp_shear_loading):
+            raise ValueError('amp_shear_loading should have a size equal to' \
+                'the number of faults. \n We got: \n - number of fault = {}' \
+                '\n - len(amp_shear_loading) = {}'.format(self.nf, 
+                len(self.amp_shear_loading)))
+        if self.amp_normal_loading and self.nf != len(self.amp_normal_loading):
+            raise ValueError('amp_normal_loading should have a size equal to'\
+                'the number of faults. \n We got: \n - number of fault = {}' \
+                '\n - len(amp_normal_loading) = {}'.format(self.nf, 
+                len(self.amp_normal_loading)))
         
         # Reference velocity       
         V0_val = 1e-9  # TODO ! Option to change V0_val ?  
@@ -473,14 +498,8 @@ class Simulation:
                    'sigma22_dot_inf = {} \n'.format(self.sigma_dot[1, 1]),
                    'sigma12_dot_inf = {} \n'.format(self.sigma_dot[0, 1]),
                    'sigma31_dot_inf = {} \n'.format(self.sigma_dot[0, 2]),
-                   'sigma32_dot_inf = {} \n'.format(self.sigma_dot[1, 2])]
-        if self.version >= 14:
-            content += ['shear_magnitude = {} \n'.format(self.shear_magnitude),
-                        'normal_magnitude = {} \n'.format(
-                            self.normal_magnitude),
-                        '/\n']
-        else:
-            content += ['/\n']
+                   'sigma32_dot_inf = {} \n'.format(self.sigma_dot[1, 2]),
+                   '/\n']
 
         # Create one "&fault_friction" section per fault
         for i in range(self.nf):
@@ -510,8 +529,19 @@ class Simulation:
                     "sigmaN_distr = 'CST'\n",
                     'sigmaN_val = -1,-1,{},{}\n'.format(
                         self.sigma_N, self.sigma_N),
-                    'ds = {}\n'.format(self.Lb/10),
-                    '/\n']
+                    'ds = {}\n'.format(self.Lb/10)]
+        
+        if self.version >= 14:
+            # If amp_shear_loading is specified 
+            if self.amp_shear_loading: 
+                content += ['amp_shear_loading = {} \n'.format(
+                            self.amp_shear_loading[0])]
+            # If amp_normal_loading is specified
+            if self.amp_normal_loading:
+                content += ['amp_normal_loading = {} \n'.format(
+                            self.amp_normal_loading[0])]
+                
+        content += ['/\n']       
         
         # Create "&fault_initial_condition" for all other faults 
         for i in range(self.nf - 1):
@@ -526,8 +556,18 @@ class Simulation:
                         "sigmaN_distr = 'CST'\n",
                         'sigmaN_val = -1,-1,{},{}\n'.format(
                             self.sigma_N, self.sigma_N),
-                        'ds = {}\n'.format(self.Lb/10),
-                        '/\n']
+                        'ds = {}\n'.format(self.Lb/10)]
+            if self.version >= 14:
+                # If amp_shear_loading is specified 
+                if self.amp_shear_loading: 
+                    content += ['amp_shear_loading = {} \n'.format(
+                                self.amp_shear_loading[i+1])]
+                # If amp_normal_loading is specified
+                if self.amp_normal_loading:
+                    content += ['amp_normal_loading = {} \n'.format(
+                                self.amp_normal_loading[i+1])]
+                
+            content += ['/\n']            
 
         content += ['&simulation_parameter\n',
                     "fracture_mode = 'modeIII'\n",
@@ -597,7 +637,8 @@ class Simulation:
         else:
             # Check that times and s_amplitudes have the same length
             if len(times) != len(s_amplitudes):
-                raise Exception('times and s_amplitudes must have the same length')
+                raise Exception('times and s_amplitudes must have the same' \
+                                'length')
             
         # Create content
         content = []
@@ -767,8 +808,10 @@ class Simulation:
         content = ['0.000e+00 0.000e+00 \n',
                    '{} 0.000e+00 \n'.format(L_over_Lnuc * self.Lnuc),
                    '/\n',
-                   '{} 0.000e+00 \n'.format((L_over_Lnuc + W_over_Lnuc) * self.Lnuc),
-                   '{} 0.000e+00 \n'.format((2 * L_over_Lnuc + W_over_Lnuc) * self.Lnuc),
+                   '{} 0.000e+00 \n'.format((L_over_Lnuc + W_over_Lnuc) 
+                                            * self.Lnuc),
+                   '{} 0.000e+00 \n'.format((2 * L_over_Lnuc + W_over_Lnuc) 
+                                            * self.Lnuc),
                    '/\n']
         
         # Write geometry.in
