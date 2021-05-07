@@ -227,13 +227,7 @@ class Simulation:
 
         self.L_over_Lnuc = L_over_Lnuc
         self.version = version 
-        self.create_GPS_file(GPSx, GPSy)
-        # if self.version < 14:
-        #     self.create_tides_file(Tampli, Tperiod, Tphase)
-        #     self.create_amplitude_file(times, s_amplitudes)
-        # else:
-        #     self.create_amplitude_file_version14(times, s_amplitudes, 
-        #                                          n_amplitudes)   
+        self.create_GPS_file(GPSx, GPSy) 
 
         if geom_type == '1fault':
             x1 = 0
@@ -259,6 +253,13 @@ class Simulation:
                                 amplitude_decimation_factor, 
                                 amp_shear_loading=amp_shear_loading,
                                 amp_normal_loading=amp_normal_loading)
+        
+        if self.version < 14:
+            self.create_tides_file(Tampli, Tperiod, Tphase)
+            self.create_amplitude_file(times, s_amplitudes)
+        else:
+            self.create_amplitude_file_version15(times, s_amplitudes, 
+                                                  n_amplitudes)  
 
     def create_GPS_file(self, GPSx=[10], GPSy=[10]):
         """
@@ -467,12 +468,12 @@ class Simulation:
                 
         # Check amp_shear_loading and amp_normal_loading dimensions 
         if self.amp_shear_loading and self.nf != len(self.amp_shear_loading):
-            raise ValueError('amp_shear_loading should have a size equal to' \
+            raise ValueError('amp_shear_loading should have a size equal to ' \
                 'the number of faults. \n We got: \n - number of fault = {}' \
                 '\n - len(amp_shear_loading) = {}'.format(self.nf, 
                 len(self.amp_shear_loading)))
         if self.amp_normal_loading and self.nf != len(self.amp_normal_loading):
-            raise ValueError('amp_normal_loading should have a size equal to'\
+            raise ValueError('amp_normal_loading should have a size equal to '\
                 'the number of faults. \n We got: \n - number of fault = {}' \
                 '\n - len(amp_normal_loading) = {}'.format(self.nf, 
                 len(self.amp_normal_loading)))
@@ -651,48 +652,70 @@ class Simulation:
             for line in content:
                 file.write(line)
                 
-    def create_amplitude_file_version14(self, times=None, s_amplitudes=None, 
-                                        n_amplitudes=None):
+    def create_amplitude_file_version15(self, times=None, s_amplitudes=None, 
+                                        n_amplitudes=None, nf=False):
         """
-        Create "amplitude.in" file in the simulation directory for version 14 
+        Create "amplitude.in" file in the simulation directory for version 15 
         of FastCycles. Default is no variation of the shear and normal 
         amplitudes.
 
         Parameters
         ----------
-        times : list, optional
+        times : list of lists, optional
             Times in seconds associated with the change of amplitude. Default 
-            is [0,1].
-        s_amplitudes : list, optional
+            is [0,1] for each fault.
+        s_amplitudes : list of lists, optional
             Amplitudes of the shear stress as a percentage of the 
-            background loading given in "config.in". Default is [0,0]. 
-        n_amplitudes : list, optional
+            background loading given in "config.in". Default is [0,0] for each 
+            fault. 
+        n_amplitudes : list of lists, optional
             Amplitudes of the normal stress as a percentage of the normal 
-            traction given in "config.in". Default is [0,0].     
+            traction given in "config.in". Default is [0,0] for each fault.     
 
         Returns
         -------
         None.
 
         """
+        # Verify is fault number (nf) is defined and compute it if not
+        # Check if self.nf exist 
+        if hasattr(self, 'nf'):
+            pass
+        # Check if nf is given
+        elif nf:
+            self.nf = nf
+        # Get fault number if unspecified
+        else:
+            try:
+                # Read "geometry.in"
+                with open(self.path + 'geometry.in') as file:
+                    content = file.read()
+                self.nf = content.count('/')
+            except Exception:  # if geometry.in do not exist
+                print('You must specify a fault number or create geometry.in')
+                
         # Deal with default values
         if times is None:  # if times is None = if nothing is specify
-            times = [0,1]
-            s_amplitudes=[0,0]
-            n_amplitudes=[0,0]
+            times = [[0,1]] * self.nf
+            s_amplitudes=[[0,0]] * self.nf
+            n_amplitudes=[[0,0]] * self.nf
         # Varying normal stress but constant background loading
-        elif s_amplitudes is None:  # time is given then n_amplitudes is also given
-            s_amplitudes = [0] * len(n_amplitudes) 
+        # time is given then n_amplitudes is also given
+        elif s_amplitudes is None:  
+            s_amplitudes = [[0] * np.shape(n_amplitudes)[1]] * self.nf 
+            
         # Varying background loading but constant normal stress    
-        elif n_amplitudes is None:  # time is given then s_amplitudes is also given
-            n_amplitudes = [0] * len(s_amplitudes)
+        # time is given then s_amplitudes is also given
+        elif n_amplitudes is None:  
+            n_amplitudes = [[0] * np.shape(s_amplitudes)[1]] * self.nf 
             
         # Create content 
         content = []
-        for i, time in enumerate(times):
-            content.append('{} {} {} \n'.format(time, s_amplitudes[i], 
-                                                n_amplitudes[i]))
-        content.append('/\n')
+        for i in range(self.nf):
+            for j, time in enumerate(times[i]):
+                content.append('{} {} {} \n'.format(time, s_amplitudes[i][j], 
+                                                    n_amplitudes[i][j]))
+            content.append('/\n')
         
         # Write amplitude.in
         with open(self.path + 'amplitude.in', 'w') as file:
