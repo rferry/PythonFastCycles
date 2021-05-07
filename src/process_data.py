@@ -280,17 +280,22 @@ class ReadData:
         # stores Mrate data temporary
         Mrate_temp = np.ones((len(content)-2, self.nbr_fault))
         max_vels_temp = np.ones((len(content)-2, self.nbr_fault))
+        s_amplitudes_temp = np.ones((len(content)-2, self.nbr_fault))
+        n_amplitudes_temp = np.ones((len(content)-2, self.nbr_fault))
         for i, line in enumerate(content[2:]):  # [2:] to skip headers
             tMrate.append(float(line.split()[1]))
             netMrate.append(float(line.split()[2]))
             for j in range(self.nbr_fault):  # Loop over faults
                 Mrate_temp[i, j] = line.split()[3+j]
                 max_vels_temp[i, j] = line.split()[3+self.nbr_fault+j]
-            s_amplitudes.append(float(line.split()[-2]))    
-            n_amplitudes.append(float(line.split()[-1])) 
+                s_amplitudes_temp[i, j] = float(line.split()[3+2*self.nbr_fault+j])
+                n_amplitudes_temp[i, j] = float(line.split()[3+3*self.nbr_fault+j])
+    
         for i in range(self.nbr_fault):
             Mrate.append(Mrate_temp[:, i])
             max_vels.append(list(max_vels_temp[:, i]))
+            s_amplitudes.append(list(s_amplitudes_temp[:, i]))
+            n_amplitudes.append(list(n_amplitudes_temp[:, i]))
 
         # Stores results
         self.netMrate = netMrate
