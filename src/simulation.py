@@ -666,11 +666,11 @@ class Simulation:
             is [0,1] for each fault.
         s_amplitudes : list of lists, optional
             Amplitudes of the shear stress as a percentage of the 
-            background loading given in "config.in". Default is [0,0] for each 
-            fault. 
+            background loading given in "config.in". Default is [0.0,0.0] for 
+            each fault.
         n_amplitudes : list of lists, optional
             Amplitudes of the normal stress as a percentage of the normal 
-            traction given in "config.in". Default is [0,0] for each fault.     
+            traction given in "config.in". Default is [0.0,0.0] for each fault.     
 
         Returns
         -------
@@ -696,18 +696,18 @@ class Simulation:
                 
         # Deal with default values
         if times is None:  # if times is None = if nothing is specify
-            times = [[0,1]] * self.nf
-            s_amplitudes=[[0,0]] * self.nf
-            n_amplitudes=[[0,0]] * self.nf
+            times = [[0.0,1.0]] * self.nf
+            s_amplitudes=[[0.0,0.0]] * self.nf
+            n_amplitudes=[[0.0,0.0]] * self.nf
         # Varying normal stress but constant background loading
         # time is given then n_amplitudes is also given
         elif s_amplitudes is None:  
-            s_amplitudes = [[0] * np.shape(n_amplitudes)[1]] * self.nf 
+            s_amplitudes = [[0.0] * np.shape(n_amplitudes)[1]] * self.nf 
             
         # Varying background loading but constant normal stress    
         # time is given then s_amplitudes is also given
         elif n_amplitudes is None:  
-            n_amplitudes = [[0] * np.shape(s_amplitudes)[1]] * self.nf 
+            n_amplitudes = [[0.0] * np.shape(s_amplitudes)[1]] * self.nf 
             
         # Create content 
         content = []
