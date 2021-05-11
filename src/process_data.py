@@ -807,7 +807,7 @@ class ReadData:
         return fig, axs    
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, lim_type='index', 
-                       sharey=True, savefig=True):  
+                       sharey=True, savefig=True, which=None):  
         """
         Plot slip rate evolution for all faults.
 
@@ -831,12 +831,23 @@ class ReadData:
         savefig : bool, optional
             If savefig is True, save the figure in the simulation directory 
             under the name "slip_rate_evolution.png". The default is True.
+        which : list of integer, optional
+            List of fault to plot (first fault has index 1). The default is all
+            faults.
 
         Returns
         -------
         None.
 
         """
+        # Deal with default value of which
+        if which is None:
+            which = list(range(self.nbr_fault))    
+        # Convert user fault index to python index (user first fault index
+        # is 1 but python first fault index is 0)
+        else:
+            which = [el - 1 for el in which]
+        
         # Deal with start and stop type
         if lim_type == 'index':
             istart = start
@@ -848,21 +859,21 @@ class ReadData:
             istop = (np.absolute(self.time / (365.25*3600*24) - stop)).argmin()            
         
         max_vel = []
-        for i in range(len(self.max_vel)):
+        for i in which:
             max_vel.append(self.max_vel[i][istart:istop])
 
         # Time in year
         time = self.time[istart:istop]/(365.25*24*3600)
         
         # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]}
-        fig, axs = plt.subplots(1, self.nbr_fault + 1, sharey=sharey)
+        fig, axs = plt.subplots(1, len(which) + 1, sharey=sharey)
         
         ################
         # Plot max_vel #
         ################
         
         # Loop over all the fault 
-        for i in range(self.nbr_fault):
+        for i in range(len(which)):
             axs[0].plot(max_vel[i], time, label='Fault {}'.format(i+1))
             
         # Put y axis in log
@@ -887,8 +898,8 @@ class ReadData:
         ##################
         # Plot slip rate #
         ##################
-        
-        for i in range(self.nbr_fault):
+
+        for i in range(len(which)):
             # Mask (will display in white) velocity values < vmask
             velm = np.ma.masked_where(self.velocity[i] < vmask, 
                                       self.velocity[i])
@@ -937,7 +948,7 @@ class ReadData:
         fig.subplots_adjust(right=0.86)
 
         # Add the colorbar outside of the plot
-        box = axs[self.nbr_fault].get_position()
+        box = axs[len(which)].get_position()
         pad, width = 0.02, 0.04 # set width of the colorbar 
         cax = fig.add_axes([box.xmax + pad, box.ymin, width, box.height])
         fig.colorbar(cs, cax=cax)
