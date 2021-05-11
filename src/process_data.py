@@ -728,11 +728,12 @@ class ReadData:
                 pass
 
         # Convert time to years 
-        time = time / (3600*24*362.25)
+        time = (time / (3600*24*362.25)) 
 
         # Create figure        
         if plot_type=='each':
-            fig, axs = plt.subplots(self.nbr_fault, 1, squeeze=False)
+            fig, axs = plt.subplots(self.nbr_fault, 1, squeeze=False, 
+                                    sharex=True)
         elif plot_type=='all':
             fig, axs = plt.subplots(1, 1, squeeze=False)
 
