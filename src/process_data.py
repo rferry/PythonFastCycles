@@ -908,17 +908,17 @@ class ReadData:
         # Plot slip rate #
         ##################
 
-        for i in range(len(which)):
+        for i, f in enumerate(which):
             # Mask (will display in white) velocity values < vmask
-            velm = np.ma.masked_where(self.velocity[i] < vmask, 
-                                      self.velocity[i])
+            velm = np.ma.masked_where(self.velocity[f] < vmask, 
+                                      self.velocity[f])
             
             # Set the grid
             if sharey:
                 y = time
             else:
                 y = np.arange(len(time))
-            xx, yy = np.meshgrid(self.ex[i], y)
+            xx, yy = np.meshgrid(self.ex[f], y)
             
             # Create colormap
             cmp = nice_colormap()
