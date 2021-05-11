@@ -807,7 +807,7 @@ class ReadData:
         return fig, axs    
         
     def plot_slip_rate(self, vmask=1e-14, start=0, stop=None, lim_type='index', 
-                       sharey=True, savefig=True, which=None):  
+                       sharey=True, savefig=True, which=None, aspect=None):  
         """
         Plot slip rate evolution for all faults.
 
@@ -834,6 +834,8 @@ class ReadData:
         which : list of integer, optional
             List of fault to plot (first fault has index 1). The default is all
             faults.
+        aspect : float, optional
+            Ratio height / width of the figure. Default is automatic ratio.
 
         Returns
         -------
@@ -866,7 +868,14 @@ class ReadData:
         time = self.time[istart:istop]/(365.25*24*3600)
         
         # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]}
-        fig, axs = plt.subplots(1, len(which) + 1, sharey=sharey)
+        # If a specific ratio for the figure is given
+        if aspect is not None:
+            w, h = plt.figaspect(aspect)
+            fig, axs = plt.subplots(1, len(which) + 1, sharey=sharey, 
+                                    figsize=(w, h))
+        # if no ratio given, let matplotlib do the job    
+        else:
+            fig, axs = plt.subplots(1, len(which) + 1, sharey=sharey)
         
         ################
         # Plot max_vel #
@@ -955,7 +964,7 @@ class ReadData:
         
         # Save figure if savefig=True
         if savefig:
-            fig.savefig(self.path + 'slip_rate_evolution.png', dpi=400)
+            fig.savefig(self.path + 'slip_rate_evolution.png', dpi=400, bbox_inches='tight')
 
         return fig
         
