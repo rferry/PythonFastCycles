@@ -728,7 +728,7 @@ class ReadData:
                 pass
 
         # Convert time to years 
-        time = (time / (3600*24*362.25)) 
+        time = (time / (3600*24*365.25))
 
         # Create figure        
         if plot_type=='each':
@@ -865,7 +865,7 @@ class ReadData:
             max_vel.append(self.max_vel[i][istart:istop])
 
         # Time in year
-        time = self.time[istart:istop]/(365.25*24*3600)
+        time = self.time[istart:istop]/(365.25*24*3600) 
         
         # TODO ? Ajouter gridspec_kw={'width_ratios': [2, 2, 2]}
         # If a specific ratio for the figure is given
