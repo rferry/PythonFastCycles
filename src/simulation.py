@@ -85,7 +85,8 @@ class Simulation:
                          final_time=10000000, tol_solver=1.00e-8, nf=False,
                          times=None, s_amplitudes=None, n_amplitudes=None,
                          version=14, amplitude_decimation_factor=1, 
-                         amp_shear_loading=None, amp_normal_loading=None):
+                         amp_shear_loading=None, amp_normal_loading=None,
+                         cp = 5.00e+03, cs = 3.50e+03, delta_s = 10):
         """
         Create all files for a simulation, i.e. "config.in", "geometry.in", 
         "tides.in" and "GPS.in".
@@ -213,6 +214,13 @@ class Simulation:
                 background + amp_normal_loading*amplitude with amplitude 
                 between 0 and 1.
             Must be a list of size nf.
+        cp : float, optional
+            P waves velocity in m/s. The default is 5 km/s.
+        cs : float, optional
+            S waves velocity in m/s. The default is 3.5 km/s.
+        delta_s : int, optional
+            Decimation factor for the fault. The fault is decimated in segment 
+            with length Lb/delta_s. The default is 10.            
 
         Returns
         -------
@@ -252,7 +260,8 @@ class Simulation:
                                 amplitude_decimation_factor=
                                 amplitude_decimation_factor, 
                                 amp_shear_loading=amp_shear_loading,
-                                amp_normal_loading=amp_normal_loading)
+                                amp_normal_loading=amp_normal_loading,
+                                cp=cp, cs=cs, delta_s=delta_s)
         
         if self.version < 14:
             self.create_tides_file(Tampli, Tperiod, Tphase)
@@ -343,7 +352,8 @@ class Simulation:
                            Vval_x2='default', Vval_pourc=0.001, max_it=10000, 
                            stop_crit=None, final_time=1e7, tol_solver=1.00e-8, 
                            nf=False, amplitude_decimation_factor=1, 
-                           amp_shear_loading=None, amp_normal_loading=None):
+                           amp_shear_loading=None, amp_normal_loading=None,
+                           cp = 5.00e+03, cs = 3.50e+03, delta_s = 10):
         """
         Create "config.in" file in the simulation directory.
 
@@ -385,6 +395,13 @@ class Simulation:
                 background + amp_normal_loading*amplitude with amplitude 
                 between 0 and 1.
             Must be a list of size nf.
+        cp : float, optional
+            P waves velocity in m/s. The default is 5 km/s.
+        cs : float, optional
+            S waves velocity in m/s. The default is 3.5 km/s.
+        delta_s : int, optional
+            Decimation factor for the fault. The fault is decimated in segment 
+            with length Lb/delta_s. The default is 10.
             
         Raises
         ------
@@ -421,6 +438,9 @@ class Simulation:
         self.amplitude_decimation_factor = amplitude_decimation_factor
         self.amp_shear_loading = amp_shear_loading
         self.amp_normal_loading = amp_normal_loading
+        self.cp = cp
+        self.cs = cs
+        self.delta_s = delta_s
 
         # Preliminary check for Vval_x1 and Vval_x2
         if Vval_x1 == 'default' and Vval_x2 == 'default':
@@ -493,8 +513,8 @@ class Simulation:
                    '/\n',
                    '&material_and_loading\n',
                    'mu = {} \n'.format(self.mu),
-                   'cp = 5.00e+03 \n',
-                   'cs = 3.50e+03 \n',
+                   'cp = {} \n'.format(self.cp),
+                   'cs = {} \n'.format(self.cs),
                    'sigma11_dot_inf = {} \n'.format(self.sigma_dot[0, 0]),
                    'sigma22_dot_inf = {} \n'.format(self.sigma_dot[1, 1]),
                    'sigma12_dot_inf = {} \n'.format(self.sigma_dot[0, 1]),
@@ -530,7 +550,7 @@ class Simulation:
                     "sigmaN_distr = 'CST'\n",
                     'sigmaN_val = -1,-1,{},{}\n'.format(
                         self.sigma_N, self.sigma_N),
-                    'ds = {}\n'.format(self.Lb/10)]
+                    'ds = {}\n'.format(self.Lb/self.delta_s)]
         
         if self.version >= 14:
             # If amp_shear_loading is specified 
