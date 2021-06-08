@@ -975,7 +975,7 @@ class Simulation:
         with open(self.path + 'geometry.in', 'r') as file:
             content = file.readlines()
             
-        # Extract nbr_fault, x amd y coordinates
+        # Extract nbr_fault, x and y coordinates
         # Initialisation
         nbr_fault = 0
         x = []
