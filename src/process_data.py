@@ -1097,7 +1097,8 @@ class ReadData:
             If GPS is True, plot the GPS stations. Default is True.
         savefig : bool, optional
             If savefig is True, save the figure in the simulation directory 
-            under the name "slip_rate_evolution.png". The default is True.
+            under the name "geometry_out_$scale$.png", where $sclae$ is either
+            'Lnuc' or 'X'. The default is True.
 
         Returns
         -------
