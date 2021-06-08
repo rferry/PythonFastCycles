@@ -408,8 +408,11 @@ class ReadData:
                 shear_magnitude = float(line.split()[2])
             elif line.startswith('normal_magnitude'):
                 normal_magnitude = float(line.split()[2])
-            
+            elif line.startswith('fracture_mode'):
+                fracture_mode = line.split()[2][1:-1]  
+                       
         # Store values 
+        self.fracture_mode = fracture_mode 
         self.a = a
         self.b = b
         self.Dc = Dc
@@ -425,6 +428,7 @@ class ReadData:
             self.normal_magnitude = normal_magnitude 
         except:
             pass
+        
     
     def read_tides(self):
         """
