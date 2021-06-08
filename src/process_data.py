@@ -216,23 +216,35 @@ class ReadData:
             elements, s1 = s3.split('\n')
             self.elements.append(int(elements))
             
-        # Extract coordinates of elements
+        # Extract coordinates of elements and n1 and n2
         ex_temp = []  # x coordinate of each elements
         ey_temp = []  # y coordinate of each elements 
         ex = []
         ey = []
+        n1_temp = []  # unit normal vector first coordinate
+        n2_temp = []  # unit normal vector second coordinate
+        n1 = []
+        n2 = []
         # Loop over content and skip headers
         for i, line in enumerate(content[2+self.nbr_fault:]):
             ex_temp.append(float(line.split()[1]))
             ey_temp.append(float(line.split()[2])) 
+            n1_temp.append(float(line.split()[3])) 
+            n2_temp.append(float(line.split()[4])) 
         # Reshape to get coordinates for each fault
         last_el = 0
         for i, el in enumerate(self.elements):
             ex.append(ex_temp[last_el:last_el+el])
             ey.append(ey_temp[last_el:last_el+el])
+            n1.append(n1_temp[last_el:last_el+el])
+            n2.append(n2_temp[last_el:last_el+el])
             last_el += el
+            
+        # Store results    
         self.ex = ex
-        self.ey = ey            
+        self.ey = ey   
+        self.n1 = n1
+        self.n2 = n2         
             
     def compute_max_vel(self):
         """
