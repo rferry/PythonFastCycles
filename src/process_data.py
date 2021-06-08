@@ -245,6 +245,34 @@ class ReadData:
         self.ey = ey   
         self.n1 = n1
         self.n2 = n2         
+        
+    def read_geometry_in(self):
+        """
+        Read "geometry.in" file to get the points defining faults.
+
+        Returns
+        -------
+        None.
+
+        """        
+        # Open geometry.in and read content
+        with open(self.path + 'geometry.in', 'r') as file:
+            content = file.readlines()        
+            
+        # Extract x and y coordinates
+        # Initialisation
+        x = []
+        y = []
+        for line in content:
+            if line == '/\n':
+                pass
+            else:
+                x_temp, y_temp = line.split()
+                x.append(float(x_temp))
+                y.append(float(y_temp))
+        # Store results        
+        self.x = x
+        self.y = y    
             
     def compute_max_vel(self):
         """
