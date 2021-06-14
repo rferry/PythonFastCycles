@@ -577,7 +577,7 @@ class Simulation:
                         "sigmaN_distr = 'CST'\n",
                         'sigmaN_val = -1,-1,{},{}\n'.format(
                             self.sigma_N, self.sigma_N),
-                        'ds = {}\n'.format(self.Lb/10)]
+                        'ds = {}\n'.format(self.Lb/self.delta_s)]
             if self.version >= 14:
                 # If amp_shear_loading is specified 
                 if self.amp_shear_loading: 
