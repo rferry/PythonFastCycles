@@ -14,6 +14,8 @@ from scipy.signal import find_peaks
 from matplotlib import cm 
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
+import process_data as rd 
+
 
 def run_simulations(simunames, path_to_makefile='/Users/roxane/Desktop/version11/'):
     os.chdir(path_to_makefile)
@@ -265,3 +267,43 @@ def find_simunames(path, regex):
             
     # Return the list of all matching simulations
     return simus
+
+def verify_traction_signs(path):
+    # Read data
+    data = rd.ReadData(path, tLnuc='Linf')
+    # Read geometry.in to have the faults' edges coordinates
+    data.read_geometry_in()
+    
+    # Compute the traction for each fault
+    T = []
+    if data.fracture_mode == 'modeIII':
+        for i in range(data.nbr_fault):
+            T.append(data.sigma_dot[2, 0] * data.n1[i][0] + data.sigma_dot[2, 1] * data.n2[i][0])
+    elif data.fracture_mode == 'modeII':
+        for i in range(data.nbr_fault):
+            T.append(data.sigma_dot[0,0] * data.n1[i][0] * data.n2[i][0] + data.sigma_dot[0, 1]*((data.n2[i][0]**2) - data.n2[i][0]**2) - data.sigma_dot[1,1]*data.n2[i][0]*data.n1[i][0])
+    
+    # Print traction
+    print('Traction: ', T)
+    
+    # Switch coordinates if traction is negative
+    x_new = data.x[:]
+    y_new = data.y[:]
+    for i, traction in enumerate(T):
+        if traction < 0 :
+            x_new[i*2] = data.x[i*2+1]    
+            x_new[i*2+1] = data.x[i*2]
+            y_new[i*2] = data.y[i*2+1]    
+            y_new[i*2+1] = data.y[i*2]
+    
+    # Write the new geometry.in file
+    content = []
+    for i, el in enumerate(x_new[::2]):
+        content += ['{} {} \n'.format(el, y_new[i*2]),
+                    '{} {} \n'.format(x_new[(i*2)+1], y_new[(i*2)+1]),
+                    '/\n']
+        
+    # Write geometry.in
+    with open(path +  'geometry.in', 'w') as file:
+        for line in content:
+            file.write(line)
