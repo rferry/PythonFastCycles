@@ -307,6 +307,8 @@ class ReadData:
         None.
 
         """
+        print("Reading 'MomentRate.out'...")
+        
         # Open and read MomentRate.out
         with open(self.path + 'MomentRate.out', 'r') as file:
             content = file.readlines()
@@ -344,6 +346,8 @@ class ReadData:
         self.max_vels = max_vels
         self.s_amplitudes = np.array(s_amplitudes)
         self.n_amplitudes = np.array(n_amplitudes) 
+        
+        print("... 'MomentRate.out' read.")
 
     def read_config(self):
         """
@@ -789,6 +793,8 @@ class ReadData:
                 # Fill between line and O
                 axs[i, 0].fill_between(
                     time, 0, max_vel[i], color='lightgrey')
+                
+                axs[i, 0].scatter(self.tMrate/(365.25*3600*24), self.s_amplitudes[i], color='k')
     
                 # Write subplot title if there is more than one fault
                 if self.nbr_fault > 1 :
